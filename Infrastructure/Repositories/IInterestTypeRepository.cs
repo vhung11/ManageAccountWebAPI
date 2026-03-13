@@ -5,12 +5,8 @@ namespace ManageAccountWebAPI.Infrastructure.Repositories
     /// <summary>
     /// Interface cho InterestType Repository
     /// </summary>
-    public interface IInterestTypeRepository
+    public interface IInterestTypeRepository : IBaseRepository<InterestType>
     {
-        InterestType? GetById(int id);
         InterestType? GetByRate(decimal rate);
-        InterestType Add(InterestType interestType);
-        void Delete(InterestType interestType);
-        int SaveChanges();
     }
 }

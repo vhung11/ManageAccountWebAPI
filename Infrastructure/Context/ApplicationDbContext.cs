@@ -28,10 +28,10 @@ namespace ManageAccountWebAPI.Infrastructure.Context
             }
         }
 
-        public DbSet<Account> Accounts { get; set; }
-        public DbSet<AccountBalance> AccountBalances { get; set; }
-        public DbSet<InterestType> InterestTypes { get; set; }
-        public DbSet<AppLog> AppLogs { get; set; }
+        public DbSet<Account> Accounts { get; set; } = null!;
+        public DbSet<AccountBalance> AccountBalances { get; set; } = null!;
+        public DbSet<InterestType> InterestTypes { get; set; } = null!;
+        public DbSet<AppLog> AppLogs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

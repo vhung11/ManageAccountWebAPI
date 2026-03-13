@@ -4,105 +4,96 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ManageAccountWebAPI.Controllers
 {
-	[ApiController]
-	[Route("api/[controller]")]
-	public class AccountController : ControllerBase
-	{
-		private readonly IAccountService _accountService;
-		private readonly ILogger<AccountController> _logger;
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AccountController(IAccountService accountService, ILogger<AccountController> logger) : ControllerBase
+    {
+        [HttpGet]
+        public ActionResult<IEnumerable<AccountDTO>> GetAll()
+        {
+            var accounts = accountService.GetAll().ToList();
+            logger.LogInformation("Returned {AccountCount} accounts.", accounts.Count);
+            return Ok(accounts);
+        }
 
-		public AccountController(IAccountService accountService, ILogger<AccountController> logger)
-		{
-			_accountService = accountService;
-			_logger = logger;
-		}
+        [HttpGet("{id:int}")]
+        public ActionResult<AccountDTO> GetById(int id)
+        {
+            logger.LogInformation("Fetching account {AccountId}.", id);
+            var account = accountService.GetById(id);
+            if (account is null)
+            {
+                logger.LogWarning("Account {AccountId} was not found.", id);
+                return NotFound($"Không tìm thấy tài khoản có id = {id}.");
+            }
 
-		[HttpGet]
-		public ActionResult<IEnumerable<AccountDTO>> GetAll()
-		{
-			var accounts = _accountService.GetAll().ToList();
-			_logger.LogInformation("Returned {AccountCount} accounts.", accounts.Count);
-			return Ok(accounts);
-		}
+            logger.LogInformation("Returned account {AccountId}.", id);
+            return Ok(account);
+        }
 
-		[HttpGet("{id:int}")]
-		public ActionResult<AccountDTO> GetById(int id)
-		{
-			_logger.LogInformation("Fetching account {AccountId}.", id);
-			var account = _accountService.GetById(id);
-			if (account is null)
-			{
-				_logger.LogWarning("Account {AccountId} was not found.", id);
-				return NotFound($"Không tìm thấy tài khoản có id = {id}.");
-			}
+        [HttpPost]
+        public ActionResult<AccountDTO> Create([FromBody] CreateAccountRequestDTO request)
+        {
+            logger.LogInformation("Received request to create account for {AccountName}.", request.Name);
+            var createdAccount = accountService.Create(request);
+            logger.LogInformation("Created account {AccountId} for {AccountName}.", createdAccount.Id, createdAccount.Name);
+            return CreatedAtAction(nameof(GetById), new { id = createdAccount.Id }, createdAccount);
+        }
 
-			_logger.LogInformation("Returned account {AccountId}.", id);
-			return Ok(account);
-		}
+        [HttpPut("{id:int}")]
+        public ActionResult<AccountDTO> Update(int id, [FromBody] UpdateAccountRequestDTO request)
+        {
+            logger.LogInformation("Received request to update account {AccountId}.", id);
+            var updatedAccount = accountService.Update(id, request);
+            if (updatedAccount is null)
+            {
+                logger.LogWarning("Account {AccountId} was not found for update.", id);
+                return NotFound($"Không tìm thấy tài khoản có id = {id}.");
+            }
 
-		[HttpPost]
-		public ActionResult<AccountDTO> Create([FromBody] CreateAccountRequestDTO request)
-		{
-			_logger.LogInformation("Received request to create account for {AccountName}.", request.Name);
-			var createdAccount = _accountService.Create(request);
-			_logger.LogInformation("Created account {AccountId} for {AccountName}.", createdAccount.Id, createdAccount.Name);
-			return CreatedAtAction(nameof(GetById), new { id = createdAccount.Id }, createdAccount);
-		}
+            logger.LogInformation("Updated account {AccountId}.", id);
+            return Ok(updatedAccount);
+        }
 
-		[HttpPut("{id:int}")]
-		public ActionResult<AccountDTO> Update(int id, [FromBody] UpdateAccountRequestDTO request)
-		{
-			_logger.LogInformation("Received request to update account {AccountId}.", id);
-			var updatedAccount = _accountService.Update(id, request);
-			if (updatedAccount is null)
-			{
-				_logger.LogWarning("Account {AccountId} was not found for update.", id);
-				return NotFound($"Không tìm thấy tài khoản có id = {id}.");
-			}
+        [HttpDelete("{id:int}")]
+        public ActionResult Delete(int id)
+        {
+            logger.LogInformation("Received request to delete account {AccountId}.", id);
+            var success = accountService.Delete(id);
+            if (!success)
+            {
+                logger.LogWarning("Account {AccountId} was not found for deletion.", id);
+                return NotFound($"Không tìm thấy tài khoản có id = {id}.");
+            }
 
-			_logger.LogInformation("Updated account {AccountId}.", id);
-			return Ok(updatedAccount);
-		}
+            logger.LogInformation("Deleted account {AccountId}.", id);
+            return NoContent();
+        }
 
-		[HttpDelete("{id:int}")]
-		public ActionResult Delete(int id)
-		{
-			_logger.LogInformation("Received request to delete account {AccountId}.", id);
-			var success = _accountService.Delete(id);
-			if (!success)
-			{
-				_logger.LogWarning("Account {AccountId} was not found for deletion.", id);
-				return NotFound($"Không tìm thấy tài khoản có id = {id}.");
-			}
+        [HttpGet("ranked")]
+        public ActionResult<IEnumerable<AccountDTO>> GetAccountsRankedByBalance()
+        {
+            var accounts = accountService.GetAccountsRankedByBalance().ToList();
+            logger.LogInformation("Returned {AccountCount} ranked accounts.", accounts.Count);
+            return Ok(accounts);
+        }
 
-			_logger.LogInformation("Deleted account {AccountId}.", id);
-			return NoContent();
-		}
+        [HttpGet("below-balance")]
+        public ActionResult<IEnumerable<AccountDTO>> GetAccountsBelowBalance([FromQuery] decimal threshold)
+        {
+            logger.LogInformation("Fetching accounts with total balance below {Threshold}.", threshold);
+            var accounts = accountService.GetAccountsBelowBalance(threshold).ToList();
+            logger.LogInformation("Returned {AccountCount} accounts with total balance below {Threshold}.", accounts.Count, threshold);
+            return Ok(accounts);
+        }
 
-		[HttpGet("ranked")]
-		public ActionResult<IEnumerable<AccountDTO>> GetAccountsRankedByBalance()
-		{
-			var accounts = _accountService.GetAccountsRankedByBalance().ToList();
-			_logger.LogInformation("Returned {AccountCount} ranked accounts.", accounts.Count);
-			return Ok(accounts);
-		}
-
-		[HttpGet("below-balance")]
-		public ActionResult<IEnumerable<AccountDTO>> GetAccountsBelowBalance([FromQuery] decimal threshold)
-		{
-			_logger.LogInformation("Fetching accounts with total balance below {Threshold}.", threshold);
-			var accounts = _accountService.GetAccountsBelowBalance(threshold).ToList();
-			_logger.LogInformation("Returned {AccountCount} accounts with total balance below {Threshold}.", accounts.Count, threshold);
-			return Ok(accounts);
-		}
-
-		[HttpGet("top-checking/{topN:int}")]
-		public ActionResult<IEnumerable<AccountDTO>> GetTopNCheckingAccounts(int topN)
-		{
-			_logger.LogInformation("Fetching top {TopN} checking accounts with the lowest balances.", topN);
-			var accounts = _accountService.GetTopNCheckingAccounts(topN).ToList();
-			_logger.LogInformation("Returned {AccountCount} checking accounts for top {TopN} request.", accounts.Count, topN);
-			return Ok(accounts);
-		}
-	}
+        [HttpGet("top-checking/{topN:int}")]
+        public ActionResult<IEnumerable<AccountDTO>> GetTopNCheckingAccounts(int topN)
+        {
+            logger.LogInformation("Fetching top {TopN} checking accounts with the lowest balances.", topN);
+            var accounts = accountService.GetTopNCheckingAccounts(topN).ToList();
+            logger.LogInformation("Returned {AccountCount} checking accounts for top {TopN} request.", accounts.Count, topN);
+            return Ok(accounts);
+        }
+    }
 }

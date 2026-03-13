@@ -1,188 +1,82 @@
+using ManageAccountWebAPI.Data.Constants;
 using ManageAccountWebAPI.Infrastructure.Repositories;
 using ManageAccountWebAPI.Services.Interfaces;
 
 namespace ManageAccountWebAPI.Services.Implementations
 {
-    public class TransactionService : ITransactionService
+    public class TransactionService(IAccountRepository accountRepository, IAccountBalanceRepository accountBalanceRepository, ILogger<TransactionService> logger) : ITransactionService
     {
-        private const string SavingsAccountType = "Tài khoản tiết kiệm";
-        private const string CheckingAccountType = "Tài khoản thanh toán";
-
-        private readonly IAccountRepository _accountRepository;
-        private readonly IAccountBalanceRepository _accountBalanceRepository;
-        private readonly ILogger<TransactionService> _logger;
-
-        public TransactionService(IAccountRepository accountRepository, IAccountBalanceRepository accountBalanceRepository, ILogger<TransactionService> logger)
-        {
-            _accountRepository = accountRepository;
-            _accountBalanceRepository = accountBalanceRepository;
-            _logger = logger;
-        }
-
         public bool DepositToSavings(int accountId, decimal amount)
         {
-            if (amount <= 0)
-            {
-                _logger.LogWarning("Rejected savings deposit for account {AccountId} because amount {Amount} is not positive.", accountId, amount);
-                return false;
-            }
-
-            var account = _accountRepository.GetById(accountId);
-            if (account == null)
-            {
-                _logger.LogWarning("Attempted to deposit to savings for non-existent account with id {AccountId}.", accountId);
-                return false;
-            }
-
-            var savingsBalance = _accountBalanceRepository.GetByAccountIdAndType(accountId, SavingsAccountType);
-            if (savingsBalance == null)
-            {
-                _logger.LogWarning("Attempted to deposit to savings for account {AccountId} which does not have a savings balance.", accountId);
-                return false;
-            }
-
-            savingsBalance.Balance += amount;
-            _accountBalanceRepository.Update(savingsBalance);
-            _accountBalanceRepository.SaveChanges();
-
-            _logger.LogInformation("Deposited {Amount} to savings for account {AccountId}. New savings balance: {NewBalance}.", 
-                amount, 
-                accountId, 
-                savingsBalance.Balance);
-
-            return true;
+            return PerFormTransaction(accountId, amount, AccountType.Savings, true);
         }
 
         public bool DepositToChecking(int accountId, decimal amount)
         {
-            if (amount <= 0)
-            {
-                _logger.LogWarning("Rejected checking deposit for account {AccountId} because amount {Amount} is not positive.", accountId, amount);
-                return false;
-            }
-
-            var account = _accountRepository.GetById(accountId);
-            if (account == null)
-            {
-                _logger.LogWarning("Attempted to deposit to checking for non-existent account with id {AccountId}.", accountId);
-                return false;
-            }
-
-            var checkingBalance = _accountBalanceRepository.GetByAccountIdAndType(accountId, CheckingAccountType);
-            if (checkingBalance == null)
-            {
-                _logger.LogWarning("Attempted to deposit to checking for account {AccountId} which does not have a checking balance.", accountId);
-                return false;
-            }
-
-            checkingBalance.Balance += amount;
-            _accountBalanceRepository.Update(checkingBalance);
-            _accountBalanceRepository.SaveChanges();
-
-            _logger.LogInformation("Deposited {Amount} to checking for account {AccountId}. New checking balance: {NewBalance}.", 
-                amount, 
-                accountId, 
-                checkingBalance.Balance);
-
-            return true;
+            return PerFormTransaction(accountId, amount, AccountType.Checking, true);
         }
 
         public bool WithdrawFromSavings(int accountId, decimal amount)
         {
-            if (amount <= 0)
-            {
-                _logger.LogWarning("Rejected savings withdrawal for account {AccountId} because amount {Amount} is not positive.", accountId, amount);
-                return false;
-            }
-
-            var account = _accountRepository.GetById(accountId);
-            if (account == null)
-            {
-                _logger.LogWarning("Attempted to withdraw from savings for non-existent account with id {AccountId}.", accountId);
-                return false;
-            }
-
-            var savingsBalance = _accountBalanceRepository.GetByAccountIdAndType(accountId, SavingsAccountType);
-            if (savingsBalance == null)
-            {
-                _logger.LogWarning("Attempted to withdraw from savings for account {AccountId} which does not have a savings balance.", accountId);
-                return false;
-            }
-
-            if (savingsBalance.Balance < amount)
-            {
-                _logger.LogWarning("Attempted to withdraw {Amount} from savings for account {AccountId} but only {CurrentBalance} is available.", 
-                    amount, 
-                    accountId, 
-                    savingsBalance.Balance);
-                return false;
-            }
-
-            savingsBalance.Balance -= amount;
-            _accountBalanceRepository.Update(savingsBalance);
-            _accountBalanceRepository.SaveChanges();
-
-            _logger.LogInformation("Withdrew {Amount} from savings for account {AccountId}. New savings balance: {NewBalance}.", 
-                amount, 
-                accountId, 
-                savingsBalance.Balance);
-
-            return true;
+            return PerFormTransaction(accountId, amount, AccountType.Savings, false);
         }
 
         public bool WithdrawFromChecking(int accountId, decimal amount)
         {
-            if (amount <= 0)
-            {
-                _logger.LogWarning("Rejected checking withdrawal for account {AccountId} because amount {Amount} is not positive.", accountId, amount);
-                return false;
-            }
-
-            var account = _accountRepository.GetById(accountId);
-            if (account == null)
-            {
-                _logger.LogWarning("Attempted to withdraw from checking for non-existent account with id {AccountId}.", accountId);
-                return false;
-            }
-
-            var checkingBalance = _accountBalanceRepository.GetByAccountIdAndType(accountId, CheckingAccountType);
-            if (checkingBalance == null)
-            {
-                _logger.LogWarning("Attempted to withdraw from checking for account {AccountId} which does not have a checking balance.", accountId);
-                return false;
-            }
-
-            if (checkingBalance.Balance < amount)
-            {
-                _logger.LogWarning("Attempted to withdraw {Amount} from checking for account {AccountId} but only {CurrentBalance} is available.", 
-                    amount, 
-                    accountId, 
-                    checkingBalance.Balance);
-                return false;
-            }
-
-            checkingBalance.Balance -= amount;
-            _accountBalanceRepository.Update(checkingBalance);
-            _accountBalanceRepository.SaveChanges();
-
-            _logger.LogInformation("Withdrew {Amount} from checking for account {AccountId}. New checking balance: {NewBalance}.", 
-                amount, 
-                accountId, 
-                checkingBalance.Balance);
-
-            return true;
+            return PerFormTransaction(accountId, amount, AccountType.Checking, false);
         }
 
         public decimal GetTotalSavingsBalance()
         {
-            var accounts = _accountRepository.GetAll();
-            var savingsBalances = accounts.Select (a => _accountBalanceRepository.GetByAccountIdAndType(a.Id, SavingsAccountType))
+            var accounts = accountRepository.GetAll();
+            var savingsBalances = accounts.Select(a => accountBalanceRepository.GetByAccountIdAndType(a.Id, AccountType.Savings))
                                           .Where(b => b != null)
                                           .Select(b => b!.Balance);
             var totalSavingsBalance = savingsBalances.Sum();
-            
-            _logger.LogInformation("Calculated total savings balance across all accounts: {TotalSavingsBalance}.", totalSavingsBalance);
+
+            logger.LogInformation("Calculated total savings balance across all accounts: {TotalSavingsBalance}.", totalSavingsBalance);
             return totalSavingsBalance;
+        }
+
+        private bool PerFormTransaction(int accountId, decimal amount, string accountType, bool isDeposit)
+        {
+            string operationName = isDeposit ? "Deposit" : "Withdraw";
+            string typeName = accountType == AccountType.Savings ? "Savings" : "Checking";
+            string operation = $"{operationName} {typeName}";
+
+            if (amount <= 0)
+            {
+                logger.LogWarning("Rejected {Operation} for account {AccountId} because amount {Amount} is not positive.", operation, accountId, amount);
+                return false;
+            }
+
+            var account = accountRepository.GetById(accountId);
+            if (account == null)
+            {
+                logger.LogWarning("Attempted to {Operation} for non-existent account with id {AccountId}.", operation, accountId);
+                return false;
+            }
+
+            var accountBalance = accountBalanceRepository.GetByAccountIdAndType(accountId, accountType);
+            if (accountBalance == null)
+            {
+                logger.LogWarning("Attempted to {Operation} for account {AccountId} which does not have a {TypeName} balance.", operation, accountId, typeName);
+                return false;
+            }
+
+            if (!isDeposit && accountBalance.Balance < amount)
+            {
+                logger.LogWarning("Attempted to {Operation} {Amount} from {TypeName} for account {AccountId} but only {CurrentBalance} is available.", operation, amount, typeName, accountId, accountBalance.Balance);
+                return false;
+            }
+
+            accountBalance.Balance += isDeposit ? amount : -amount;
+            accountBalanceRepository.Update(accountBalance);
+            accountBalanceRepository.SaveChanges();
+
+            logger.LogInformation("{OperationVerb} {Amount} {Direction} {AccountType} for account {AccountId}. New balance: {NewBalance}.",
+                isDeposit ? "Deposited" : "Withdrew", amount, isDeposit ? "to" : "from", typeName, accountId, accountBalance.Balance);
+            return true;
         }
     }
 }
