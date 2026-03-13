@@ -7,5 +7,10 @@ namespace ManageAccountWebAPI.Services.Interfaces
         IEnumerable<AccountDTO> GetAll();
         AccountDTO? GetById(int id);
         AccountDTO Create(CreateAccountRequestDTO request);
+        AccountDTO? Update(int id, UpdateAccountRequestDTO request);
+        bool Delete(int id);
+        IEnumerable<AccountDTO> GetAccountsRankedByBalance();
+        IEnumerable<AccountDTO> GetAccountsBelowBalance(decimal threshold);
+        IEnumerable<AccountDTO> GetTopNCheckingAccounts(int topN);
     }
 }
