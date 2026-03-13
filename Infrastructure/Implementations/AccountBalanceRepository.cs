@@ -1,62 +1,17 @@
 using ManageAccountWebAPI.Data.Entities;
 using ManageAccountWebAPI.Infrastructure.Context;
 using ManageAccountWebAPI.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace ManageAccountWebAPI.Infrastructure.Implementations
 {
-    public class AccountBalanceRepository : IAccountBalanceRepository
+    public class AccountBalanceRepository : BaseRepository<AccountBalance>, IAccountBalanceRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public AccountBalanceRepository(ApplicationDbContext context)
+        public AccountBalanceRepository(ApplicationDbContext context) : base(context)
         {
-            _context = context;
         }
 
-        #region Basic CRUD Operations
-
-        /// <summary>
-        /// Lấy AccountBalance theo Id
-        /// </summary>
-        public AccountBalance? GetById(int id)
-        {
-            return _context.AccountBalances.FirstOrDefault(ab => ab.Id == id);
-        }
-
-        /// <summary>
-        /// Lấy tất cả AccountBalances
-        /// </summary>
-        public IEnumerable<AccountBalance> GetAll()
-        {
-            return _context.AccountBalances.ToList();
-        }
-
-        /// <summary>
-        /// Thêm AccountBalance mới
-        /// </summary>
-        public AccountBalance Add(AccountBalance accountBalance)
-        {
-            _context.AccountBalances.Add(accountBalance);
-            return accountBalance;
-        }
-
-        /// <summary>
-        /// Cập nhật AccountBalance
-        /// </summary>
-        public void Update(AccountBalance accountBalance)
-        {
-            _context.AccountBalances.Update(accountBalance);
-        }
-
-        /// <summary>
-        /// Xóa AccountBalance
-        /// </summary>
-        public void Delete(AccountBalance accountBalance)
-        {
-            _context.AccountBalances.Remove(accountBalance);
-        }
-
-        #endregion
+        protected override DbSet<AccountBalance> DbSet => _context.AccountBalances;
 
         #region Specific Queries
 
@@ -77,18 +32,6 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
         {
             return _context.AccountBalances
                 .FirstOrDefault(ab => ab.AccountId == accountId && ab.Type == type);
-        }
-
-        #endregion
-
-        #region Save Changes
-
-        /// <summary>
-        /// Lưu tất cả thay đổi vào database
-        /// </summary>
-        public int SaveChanges()
-        {
-            return _context.SaveChanges();
         }
 
         #endregion

@@ -20,11 +20,8 @@ namespace ManageAccountWebAPI.Controllers
         public ActionResult DepositToSavings(int id, [FromQuery] decimal amount)
         {
             _logger.LogInformation("Received savings deposit request for account {AccountId} with amount {Amount}.", id, amount);
-            if (amount <= 0)
-            {
-                _logger.LogWarning("Rejected savings deposit for account {AccountId} because amount {Amount} is not positive.", id, amount);
-                return BadRequest("Số tiền phải lớn hơn 0.");
-            }
+            var validationError = ValidateAmount(id, amount, "savings deposit");
+            if (validationError != null) return validationError;
 
             var success = _transactionService.DepositToSavings(id, amount);
             if (!success)
@@ -41,11 +38,8 @@ namespace ManageAccountWebAPI.Controllers
         public ActionResult DepositToChecking(int id, [FromQuery] decimal amount)
         {
             _logger.LogInformation("Received checking deposit request for account {AccountId} with amount {Amount}.", id, amount);
-            if (amount <= 0)
-            {
-                _logger.LogWarning("Rejected checking deposit for account {AccountId} because amount {Amount} is not positive.", id, amount);
-                return BadRequest("Số tiền phải lớn hơn 0.");
-            }
+            var validationError = ValidateAmount(id, amount, "checking deposit");
+            if (validationError != null) return validationError;
 
             var success = _transactionService.DepositToChecking(id, amount);
             if (!success)
@@ -62,11 +56,8 @@ namespace ManageAccountWebAPI.Controllers
         public ActionResult WithdrawFromSavings(int id, [FromQuery] decimal amount)
         {
             _logger.LogInformation("Received savings withdrawal request for account {AccountId} with amount {Amount}.", id, amount);
-            if (amount <= 0)
-            {
-                _logger.LogWarning("Rejected savings withdrawal for account {AccountId} because amount {Amount} is not positive.", id, amount);
-                return BadRequest("Số tiền phải lớn hơn 0.");
-            }
+            var validationError = ValidateAmount(id, amount, "savings withdrawal");
+            if (validationError != null) return validationError;
 
             var success = _transactionService.WithdrawFromSavings(id, amount);
             if (!success)
@@ -83,11 +74,8 @@ namespace ManageAccountWebAPI.Controllers
         public ActionResult WithdrawFromChecking(int id, [FromQuery] decimal amount)
         {
             _logger.LogInformation("Received checking withdrawal request for account {AccountId} with amount {Amount}.", id, amount);
-            if (amount <= 0)
-            {
-                _logger.LogWarning("Rejected checking withdrawal for account {AccountId} because amount {Amount} is not positive.", id, amount);
-                return BadRequest("Số tiền phải lớn hơn 0.");
-            }
+            var validationError = ValidateAmount(id, amount, "checking withdrawal");
+            if (validationError != null) return validationError;
 
             var success = _transactionService.WithdrawFromChecking(id, amount);
             if (!success)
@@ -108,5 +96,14 @@ namespace ManageAccountWebAPI.Controllers
             return Ok(totalSavings);
         }
 
+        private BadRequestObjectResult? ValidateAmount(int id, decimal amount, string operationDescription)
+        {
+            if (amount <= 0)
+            {
+                _logger.LogWarning("Rejected {OperationDescription} for account {AccountId} because amount {Amount} is not positive.", operationDescription, id, amount);
+                return BadRequest("Số tiền phải lớn hơn 0.");
+            }
+            return null;
+        }
     }
 }

@@ -1,3 +1,4 @@
+using ManageAccountWebAPI.Data.Constants;
 using ManageAccountWebAPI.Data.DTOs;
 using ManageAccountWebAPI.Data.Entities;
 
@@ -22,8 +23,8 @@ namespace ManageAccountWebAPI.Mappers
             {
                 Id = account.Id,
                 Name = account.Name ?? string.Empty,
-                SavingsBalance = balanceList.FirstOrDefault(b => b.Type == "Tài khoản tiết kiệm")?.Balance ?? 0,
-                CheckingBalance = balanceList.FirstOrDefault(b => b.Type == "Tài khoản thanh toán")?.Balance ?? 0
+                SavingsBalance = balanceList.FirstOrDefault(b => b.Type == AccountTypes.Savings)?.Balance ?? 0,
+                CheckingBalance = balanceList.FirstOrDefault(b => b.Type == AccountTypes.Checking)?.Balance ?? 0
             };
         }
 

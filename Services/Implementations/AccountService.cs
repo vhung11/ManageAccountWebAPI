@@ -1,3 +1,4 @@
+using ManageAccountWebAPI.Data.Constants;
 using ManageAccountWebAPI.Data.DTOs;
 using ManageAccountWebAPI.Data.Entities;
 using ManageAccountWebAPI.Infrastructure.Repositories;
@@ -8,9 +9,6 @@ namespace ManageAccountWebAPI.Services.Implementations
 {
     public class AccountService : IAccountService
     {
-        private const string SavingsAccountType = "Tài khoản tiết kiệm";
-        private const string CheckingAccountType = "Tài khoản thanh toán";
-
         private readonly IAccountRepository _accountRepository;
         private readonly IAccountBalanceRepository _accountBalanceRepository;
         private readonly IInterestTypeRepository _interestTypeRepository;
@@ -31,11 +29,7 @@ namespace ManageAccountWebAPI.Services.Implementations
 
         public IEnumerable<AccountDTO> GetAll()
         {
-            var accounts = _accountRepository.GetAll();
-            var accountBalances = _accountBalanceRepository.GetAll();
-            _logger.LogDebug("Loaded {AccountCount} accounts and {BalanceCount} account balances from database.", accounts.Count(), accountBalances.Count());
-
-            return AccountMapper.ToDTOList(accounts, accountBalances);
+            return GetAllAccountDTOs();
         }
 
         public AccountDTO? GetById(int id)
@@ -79,14 +73,14 @@ namespace ManageAccountWebAPI.Services.Implementations
                 new()
                 {
                     Account = account,
-                    Type = SavingsAccountType,
+                    Type = AccountTypes.Savings,
                     Balance = request.SavingsBalance,
                     InterestType = savingsInterestType
                 },
                 new()
                 {
                     Account = account,
-                    Type = CheckingAccountType,
+                    Type = AccountTypes.Checking,
                     Balance = request.CheckingBalance,
                     InterestType = checkingInterestType
                 }
@@ -173,10 +167,7 @@ namespace ManageAccountWebAPI.Services.Implementations
 
         public IEnumerable<AccountDTO> GetAccountsRankedByBalance()
         {
-            var accounts = _accountRepository.GetAll();
-            var accountBalances = _accountBalanceRepository.GetAll();
-
-            var rankedAccounts = AccountMapper.ToDTOList(accounts, accountBalances)
+            var rankedAccounts = GetAllAccountDTOs()
                 .OrderByDescending(a => a.TotalBalance)
                 .ToList();
             _logger.LogInformation("Loaded {Count} accounts ranked by balance.", rankedAccounts.Count());
@@ -186,10 +177,7 @@ namespace ManageAccountWebAPI.Services.Implementations
 
         public IEnumerable<AccountDTO> GetAccountsBelowBalance(decimal threshold)
         {
-            var accounts = _accountRepository.GetAll();
-            var accountBalances = _accountBalanceRepository.GetAll();
-
-            var belowBalanceAccounts = AccountMapper.ToDTOList(accounts, accountBalances)
+            var belowBalanceAccounts = GetAllAccountDTOs()
                 .Where(a => a.TotalBalance < threshold)
                 .ToList();
             if (belowBalanceAccounts.Count == 0)
@@ -203,10 +191,7 @@ namespace ManageAccountWebAPI.Services.Implementations
 
         public IEnumerable<AccountDTO> GetTopNCheckingAccounts(int topN)
         {
-            var accounts = _accountRepository.GetAll();
-            var accountBalances = _accountBalanceRepository.GetAll();
-
-            var topCheckingAccounts = AccountMapper.ToDTOList(accounts, accountBalances)
+            var topCheckingAccounts = GetAllAccountDTOs()
                 .OrderByDescending(a => a.CheckingBalance)
                 .Take(topN)
                 .ToList();
@@ -214,5 +199,14 @@ namespace ManageAccountWebAPI.Services.Implementations
 
             return topCheckingAccounts;
         }
+
+        private IEnumerable<AccountDTO> GetAllAccountDTOs()
+        {
+            var accounts = _accountRepository.GetAll();
+            var accountBalances = _accountBalanceRepository.GetAll();
+            _logger.LogDebug("Loaded {AccountCount} accounts and {BalanceCount} account balances from database.", accounts.Count(), accountBalances.Count());
+            return AccountMapper.ToDTOList(accounts, accountBalances);
+        }
     }
 }
+
