@@ -6,8 +6,16 @@ namespace ManageAccountWebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AccountController(IAccountService accountService, ILogger<AccountController> logger) : ControllerBase
+    public class AccountController : ControllerBase
     {
+        private readonly IAccountService accountService;
+        private readonly ILogger<AccountController> logger;
+
+        public AccountController(IAccountService accountService, ILogger<AccountController> logger)
+        {
+            this.accountService = accountService;
+            this.logger = logger;
+        }
         [HttpGet]
         public ActionResult<IEnumerable<AccountDTO>> GetAll()
         {

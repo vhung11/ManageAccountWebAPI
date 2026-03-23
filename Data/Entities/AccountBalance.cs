@@ -7,9 +7,5 @@ namespace ManageAccountWebAPI.Data.Entities
         public string? Type { get; set; }
         public decimal Balance { get; set; }
         public int InterestTypeId { get; set; }
-
-        // Navigation properties
-        public Account? Account { get; set; }
-        public InterestType? InterestType { get; set; }
     }
 }

@@ -4,9 +4,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ManageAccountWebAPI.Infrastructure.Implementations
 {
-    public abstract class BaseRepository<T>(ApplicationDbContext context) : IBaseRepository<T> where T : class
+    public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
     {
-        protected readonly ApplicationDbContext _context = context;
+        protected readonly ApplicationDbContext _context;
+
+        public BaseRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
         protected abstract DbSet<T> DbSet { get; }
 
         public T? GetById(int id) => DbSet.Find(id);

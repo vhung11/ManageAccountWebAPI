@@ -39,13 +39,13 @@ namespace ManageAccountWebAPI.Infrastructure.Context
 
             modelBuilder.Entity<Account>()
                 .HasMany(a => a.AccountBalances)
-                .WithOne(ab => ab.Account)
+                .WithOne()
                 .HasForeignKey(ab => ab.AccountId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AccountBalance>()
-                .HasOne(ab => ab.InterestType)
-                .WithMany(it => it.AccountBalances)
+                .HasOne<InterestType>()
+                .WithMany()
                 .HasForeignKey(ab => ab.InterestTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
 

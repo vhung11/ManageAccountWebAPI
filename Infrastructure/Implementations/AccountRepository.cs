@@ -8,8 +8,11 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
     /// <summary>
     /// Implementation của Account Repository
     /// </summary>
-    public class AccountRepository(ApplicationDbContext context) : BaseRepository<Account>(context), IAccountRepository
+    public class AccountRepository : BaseRepository<Account>, IAccountRepository
     {
+        public AccountRepository(ApplicationDbContext context) : base(context)
+        {
+        }
 
         protected override DbSet<Account> DbSet => _context.Accounts;
 

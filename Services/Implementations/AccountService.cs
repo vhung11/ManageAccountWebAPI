@@ -7,8 +7,21 @@ using ManageAccountWebAPI.Services.Interfaces;
 
 namespace ManageAccountWebAPI.Services.Implementations
 {
-    public class AccountService(IAccountRepository accountRepository, IAccountBalanceRepository accountBalanceRepository, IInterestTypeRepository interestTypeRepository, ILogger<AccountService> logger) : IAccountService
+    public class AccountService : IAccountService
     {
+        private readonly IAccountRepository accountRepository;
+        private readonly IAccountBalanceRepository accountBalanceRepository;
+        private readonly IInterestTypeRepository interestTypeRepository;
+        private readonly ILogger<AccountService> logger;
+
+        public AccountService(IAccountRepository accountRepository, IAccountBalanceRepository accountBalanceRepository, IInterestTypeRepository interestTypeRepository, ILogger<AccountService> logger)
+        {
+            this.accountRepository = accountRepository;
+            this.accountBalanceRepository = accountBalanceRepository;
+            this.interestTypeRepository = interestTypeRepository;
+            this.logger = logger;
+        }
+
         public IEnumerable<AccountDTO> GetAll()
         {
             return GetAllAccountDTOs();
@@ -57,17 +70,15 @@ namespace ManageAccountWebAPI.Services.Implementations
             {
                 new()
                 {
-                    Account = account,
                     Type = AccountType.Savings,
                     Balance = request.SavingsBalance,
-                    InterestType = savingsInterestType
+                    InterestTypeId = savingsInterestType.Id
                 },
                 new()
                 {
-                    Account = account,
                     Type = AccountType.Checking,
                     Balance = request.CheckingBalance,
-                    InterestType = checkingInterestType
+                    InterestTypeId = checkingInterestType.Id
                 }
             };
 
@@ -186,13 +197,62 @@ namespace ManageAccountWebAPI.Services.Implementations
             return topCheckingAccounts;
         }
 
-        private IEnumerable<AccountDTO> GetAllAccountDTOs()
+        public void ApplyInterest()
+        {
+            var balances = accountBalanceRepository.GetAll().ToList();
+            if (balances.Count == 0)
+            {
+                logger.LogInformation("Skipped applying interest because there are no account balances.");
+                return;
+            }
+
+            var interestRates = new Dictionary<int, decimal>();
+            var updatedBalanceCount = 0;
+
+            foreach (var accountBalance in balances)
+            {
+                if (!interestRates.TryGetValue(accountBalance.InterestTypeId, out var rate))
+                {
+                    var interestType = interestTypeRepository.GetById(accountBalance.InterestTypeId);
+                    if (interestType is null)
+                    {
+                        logger.LogWarning("Skipped interest for balance {BalanceId} because interest type {InterestTypeId} does not exist.", accountBalance.Id, accountBalance.InterestTypeId);
+                        continue;
+                    }
+
+                    rate = interestType.Rate;
+                    interestRates[accountBalance.InterestTypeId] = rate;
+                }
+
+                var interestAmount = Math.Round(accountBalance.Balance * (rate / 100m), 2, MidpointRounding.AwayFromZero);
+                if (interestAmount == 0)
+                {
+                    continue;
+                }
+
+                accountBalance.Balance += interestAmount;
+                accountBalanceRepository.Update(accountBalance);
+                updatedBalanceCount++;
+            }
+
+            if (updatedBalanceCount > 0)
+            {
+                accountBalanceRepository.SaveChanges();
+            }
+
+            logger.LogInformation("Applied interest to {UpdatedBalanceCount} balances from account service.", updatedBalanceCount);
+        }
+
+        private List<AccountDTO> GetAllAccountDTOs()
         {
             var accounts = accountRepository.GetAll();
             var accountBalances = accountBalanceRepository.GetAll();
             logger.LogDebug("Loaded {AccountCount} accounts and {BalanceCount} account balances from database", accounts.Count(), accountBalances.Count());
 
-            return AccountMapper.ToDTOList(accounts, accountBalances).ToList();
+            return AccountMapper.ToDTOList(accounts, accountBalances);
         }
+
+        
     }
 }
+

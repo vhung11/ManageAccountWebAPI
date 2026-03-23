@@ -5,8 +5,16 @@ namespace ManageAccountWebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class TransactionController(ITransactionService transactionService, ILogger<TransactionController> logger) : ControllerBase
+    public class TransactionController : ControllerBase
     {
+        private readonly ITransactionService transactionService;
+        private readonly ILogger<TransactionController> logger;
+
+        public TransactionController(ITransactionService transactionService, ILogger<TransactionController> logger)
+        {
+            this.transactionService = transactionService;
+            this.logger = logger;
+        }
         [HttpPost("deposit/{id:int}/savings")]
         public ActionResult DepositToSavings(int id, [FromQuery] decimal amount)
         {
@@ -99,6 +107,21 @@ namespace ManageAccountWebAPI.Controllers
             return Ok(totalSavings);
         }
 
+        [HttpPost("withdraw/{id:int}/checking/all")]
+        public ActionResult<decimal> WithdrawAllCheckingBalance(int id)
+        {
+            logger.LogInformation("Received request to withdraw all checking balance for account {AccountId}.", id);
+            var withdrawnAmount = transactionService.WithdrawAllCheckingBalance(id);
+            if (withdrawnAmount == 0)
+            {
+                logger.LogWarning("Withdraw all checking balance failed for account {AccountId}.", id);
+                return NotFound($"Không tìm thấy tài khoản có id = {id} hoặc tài khoản không có số dư thanh toán.");
+            }
+
+            logger.LogInformation("Withdrew all checking balance {Amount} for account {AccountId}.", withdrawnAmount, id);
+            return Ok(withdrawnAmount);
+        }
+
         private BadRequestObjectResult? ValidateAmount(int id, decimal amount, string operationDescription)
         {
             if (amount <= 0)
@@ -108,5 +131,32 @@ namespace ManageAccountWebAPI.Controllers
             }
             return null;
         }
+
+        [HttpPost("Apply-interest")]
+        public ActionResult ApplyInterestToAllAccounts()
+        {
+            logger.LogInformation("Received request to apply interest to all account balances.");
+
+            var (updatedBalanceCount, totalInterestApplied) = transactionService.ApplyInterestToAllAccounts();
+            if (updatedBalanceCount == 0)
+            {
+                logger.LogInformation("No balances were updated when applying interest.");
+                return Ok(new
+                {
+                    message = "Không có số dư nào được cập nhật lãi suất.",
+                    updatedBalanceCount,
+                    totalInterestApplied
+                });
+            }
+
+            logger.LogInformation("Applied interest successfully to {UpdatedBalanceCount} balances with total interest {TotalInterestApplied}.", updatedBalanceCount, totalInterestApplied);
+            return Ok(new
+            {
+                message = "Áp dụng lãi suất thành công cho tất cả số dư hiện có.",
+                updatedBalanceCount,
+                totalInterestApplied
+            });
+        }
+
     }
 }

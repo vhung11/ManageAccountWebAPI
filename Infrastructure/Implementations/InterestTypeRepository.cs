@@ -8,8 +8,11 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
     /// <summary>
     /// Implementation của InterestType Repository
     /// </summary>
-    public class InterestTypeRepository(ApplicationDbContext context) : BaseRepository<InterestType>(context), IInterestTypeRepository
+    public class InterestTypeRepository : BaseRepository<InterestType>, IInterestTypeRepository
     {
+        public InterestTypeRepository(ApplicationDbContext context) : base(context)
+        {
+        }
 
         protected override DbSet<InterestType> DbSet => _context.InterestTypes;
 

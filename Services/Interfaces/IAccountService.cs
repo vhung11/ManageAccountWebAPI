@@ -12,5 +12,6 @@ namespace ManageAccountWebAPI.Services.Interfaces
         IEnumerable<AccountDTO> GetAccountsRankedByBalance();
         IEnumerable<AccountDTO> GetAccountsBelowBalance(decimal threshold);
         IEnumerable<AccountDTO> GetTopNCheckingAccounts(int topN);
+        void ApplyInterest();
     }
 }

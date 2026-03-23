@@ -28,6 +28,7 @@ try
 
 	GlobalDiagnosticsContext.Set("loggingMode", configuredLoggingMode);
 	GlobalDiagnosticsContext.Set("appName", builder.Environment.ApplicationName);
+	GlobalDiagnosticsContext.Set("dbConnection", builder.Configuration.GetConnectionString("OracleConnection"));
 	bootstrapLogger.Info("NLog initialized with mode '{LoggingMode}'.", configuredLoggingMode);
 
 	builder.Services.AddControllers();

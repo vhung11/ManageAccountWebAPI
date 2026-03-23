@@ -7,7 +7,7 @@ namespace ManageAccountWebAPI.Mappers
     /// <summary>
     /// Mapper để chuyển đổi giữa Account Entity và AccountDTO
     /// </summary>
-    public static class AccountMapper
+    public static class     AccountMapper
     {
         /// <summary>
         /// Map từ Account Entity sang AccountDTO

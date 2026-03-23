@@ -5,8 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ManageAccountWebAPI.Infrastructure.Implementations
 {
-    public class AccountBalanceRepository(ApplicationDbContext context) : BaseRepository<AccountBalance>(context), IAccountBalanceRepository
+    public class AccountBalanceRepository : BaseRepository<AccountBalance>, IAccountBalanceRepository
     {
+        public AccountBalanceRepository(ApplicationDbContext context) : base(context)
+        {
+        }
         protected override DbSet<AccountBalance> DbSet => _context.AccountBalances;
 
         #region Specific Queries
