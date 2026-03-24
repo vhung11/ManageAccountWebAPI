@@ -251,8 +251,6 @@ namespace ManageAccountWebAPI.Services.Implementations
 
             return AccountMapper.ToDTOList(accounts, accountBalances);
         }
-
-        
     }
 }
 

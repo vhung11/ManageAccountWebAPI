@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ManageAccountWebAPI.Services.Interfaces;
+using ManageAccountWebAPI.Infrastructure.Filters;
 
 namespace ManageAccountWebAPI.Controllers
 {
@@ -16,6 +17,7 @@ namespace ManageAccountWebAPI.Controllers
             this.logger = logger;
         }
         [HttpPost("deposit/{id:int}/savings")]
+        [AuthorizeFunction("Account.Update")]
         public ActionResult DepositToSavings(int id, [FromQuery] decimal amount)
         {
             logger.LogInformation("Received savings deposit request for account {AccountId} with amount {Amount}.", id, amount);
@@ -37,6 +39,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("deposit/{id:int}/checking")]
+        [AuthorizeFunction("Account.Update")]
         public ActionResult DepositToChecking(int id, [FromQuery] decimal amount)
         {
             logger.LogInformation("Received checking deposit request for account {AccountId} with amount {Amount}.", id, amount);
@@ -58,6 +61,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("withdraw/{id:int}/savings")]
+        [AuthorizeFunction("Account.Update")]
         public ActionResult WithdrawFromSavings(int id, [FromQuery] decimal amount)
         {
             logger.LogInformation("Received savings withdrawal request for account {AccountId} with amount {Amount}.", id, amount);
@@ -79,6 +83,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("withdraw/{id:int}/checking")]
+        [AuthorizeFunction("Account.Update")]
         public ActionResult WithdrawFromChecking(int id, [FromQuery] decimal amount)
         {
             logger.LogInformation("Received checking withdrawal request for account {AccountId} with amount {Amount}.", id, amount);
@@ -100,6 +105,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("savings/total")]
+        [AuthorizeFunction("Account.Read")]
         public ActionResult<decimal> GetTotalSavingsBalance()
         {
             var totalSavings = transactionService.GetTotalSavingsBalance();
@@ -108,6 +114,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("withdraw/{id:int}/checking/all")]
+        [AuthorizeFunction("Account.Update")]
         public ActionResult<decimal> WithdrawAllCheckingBalance(int id)
         {
             logger.LogInformation("Received request to withdraw all checking balance for account {AccountId}.", id);
@@ -131,32 +138,5 @@ namespace ManageAccountWebAPI.Controllers
             }
             return null;
         }
-
-        [HttpPost("Apply-interest")]
-        public ActionResult ApplyInterestToAllAccounts()
-        {
-            logger.LogInformation("Received request to apply interest to all account balances.");
-
-            var (updatedBalanceCount, totalInterestApplied) = transactionService.ApplyInterestToAllAccounts();
-            if (updatedBalanceCount == 0)
-            {
-                logger.LogInformation("No balances were updated when applying interest.");
-                return Ok(new
-                {
-                    message = "Không có số dư nào được cập nhật lãi suất.",
-                    updatedBalanceCount,
-                    totalInterestApplied
-                });
-            }
-
-            logger.LogInformation("Applied interest successfully to {UpdatedBalanceCount} balances with total interest {TotalInterestApplied}.", updatedBalanceCount, totalInterestApplied);
-            return Ok(new
-            {
-                message = "Áp dụng lãi suất thành công cho tất cả số dư hiện có.",
-                updatedBalanceCount,
-                totalInterestApplied
-            });
-        }
-
     }
 }

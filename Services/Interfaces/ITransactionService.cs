@@ -8,6 +8,5 @@ namespace ManageAccountWebAPI.Services.Interfaces
         public bool WithdrawFromChecking(int accountId, decimal amount);
         public decimal GetTotalSavingsBalance();
         public decimal WithdrawAllCheckingBalance(int accountId);
-        public (int UpdatedBalanceCount, decimal TotalInterestApplied) ApplyInterestToAllAccounts();
     }
 }

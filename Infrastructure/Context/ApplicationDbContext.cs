@@ -32,6 +32,10 @@ namespace ManageAccountWebAPI.Infrastructure.Context
         public DbSet<AccountBalance> AccountBalances { get; set; } = null!;
         public DbSet<InterestType> InterestTypes { get; set; } = null!;
         public DbSet<AppLog> AppLogs { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Permission> Permissions { get; set; } = null!;
+        public DbSet<UserPermission> UserPermissions { get; set; } = null!;
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,7 +48,7 @@ namespace ManageAccountWebAPI.Infrastructure.Context
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AccountBalance>()
-                .HasOne<InterestType>()
+                .HasOne(ab => ab.InterestType)
                 .WithMany()
                 .HasForeignKey(ab => ab.InterestTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
@@ -105,6 +109,20 @@ namespace ManageAccountWebAPI.Infrastructure.Context
 
                 entity.HasIndex(e => new { e.LogLevel, e.LoggedAt })
                     .HasDatabaseName("IX_APP_LOGS_LEVEL_LOGGED_AT");
+            });
+
+            modelBuilder.Entity<UserPermission>(entity =>
+            {
+                entity.HasKey(up => new { up.UserId, up.PermissionId });
+
+                entity.HasOne(up => up.User)
+                    .WithMany()
+                    .HasForeignKey(up => up.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(up => up.Permission)
+                    .WithMany()
+                    .HasForeignKey(up => up.PermissionId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

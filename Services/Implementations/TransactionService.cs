@@ -116,55 +116,5 @@ namespace ManageAccountWebAPI.Services.Implementations
             logger.LogInformation("Withdrew all checking balance {Amount} from account {AccountId}. New balance: {NewBalance}.", withdrawnAmount, accountId, accountBalance.Balance);
             return withdrawnAmount;
         }
-
-        public (int UpdatedBalanceCount, decimal TotalInterestApplied) ApplyInterestToAllAccounts()
-        {
-            var balances = accountBalanceRepository.GetAll().ToList();
-            if (balances.Count == 0)
-            {
-                logger.LogInformation("Skipped applying interest because there are no account balances.");
-                return (0, 0);
-            }
-
-            var interestRates = new Dictionary<int, decimal>();
-            var updatedBalanceCount = 0;
-            decimal totalInterestApplied = 0;
-
-            foreach (var accountBalance in balances)
-            {
-                if (!interestRates.TryGetValue(accountBalance.InterestTypeId, out var rate))
-                {
-                    var interestType = interestTypeRepository.GetById(accountBalance.InterestTypeId);
-                    if (interestType is null)
-                    {
-                        logger.LogWarning("Skipped interest for balance {BalanceId} because interest type {InterestTypeId} does not exist.", accountBalance.Id, accountBalance.InterestTypeId);
-                        continue;
-                    }
-
-                    rate = interestType.Rate;
-                    interestRates[accountBalance.InterestTypeId] = rate;
-                }
-
-                var interestAmount = Math.Round(accountBalance.Balance * (rate / 100m), 2, MidpointRounding.AwayFromZero);
-                if (interestAmount == 0)
-                {
-                    continue;
-                }
-
-                accountBalance.Balance += interestAmount;
-                accountBalanceRepository.Update(accountBalance);
-
-                updatedBalanceCount++;
-                totalInterestApplied += interestAmount;
-            }
-
-            if (updatedBalanceCount > 0)
-            {
-                accountBalanceRepository.SaveChanges();
-            }
-
-            logger.LogInformation("Applied interest to {UpdatedBalanceCount} balances. Total interest applied: {TotalInterestApplied}.", updatedBalanceCount, totalInterestApplied);
-            return (updatedBalanceCount, totalInterestApplied);
-        }
     }
 }
