@@ -1,6 +1,7 @@
 using ManageAccountWebAPI.Infrastructure.Context;
 using ManageAccountWebAPI.Infrastructure.Implementations;
 using ManageAccountWebAPI.Infrastructure.Repositories;
+using ManageAccountWebAPI.Infrastructure.Seeder;
 using ManageAccountWebAPI.Services.Implementations;
 using ManageAccountWebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -35,7 +36,11 @@ try
 	GlobalDiagnosticsContext.Set("dbConnection", builder.Configuration.GetConnectionString("OracleConnection"));
 	bootstrapLogger.Info("NLog initialized with mode '{LoggingMode}'.", configuredLoggingMode);
 
-	builder.Services.AddControllers();
+	builder.Services.AddControllers()
+		.AddJsonOptions(options =>
+		{
+			options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+		});
 	builder.Services.AddEndpointsApiExplorer();
 	builder.Services.AddSwaggerGen(options =>
 	{
@@ -66,6 +71,7 @@ try
 	builder.Services.AddScoped<ITransactionService, TransactionService>();
 	builder.Services.AddScoped<IAuthService, AuthService>();
 	builder.Services.AddScoped<ITokenService, TokenService>();
+	builder.Services.AddScoped<DatabaseSeeder>();
 
 	var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 	var secretKey = jwtSettings["SecretKey"]
@@ -91,6 +97,13 @@ try
 	builder.Services.AddAuthorization();
 
 	var app = builder.Build();
+
+	// Run database seeder
+	using (var scope = app.Services.CreateScope())
+	{
+		var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+		seeder.Seed();
+	}
 
 	if (app.Environment.IsDevelopment())
 	{
