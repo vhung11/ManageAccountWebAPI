@@ -61,34 +61,40 @@ namespace ManageAccountWebAPI.Services.Implementations
             var savingsInterestType = EnsureInterestType(4.7m);
             var checkingInterestType = EnsureInterestType(5.1m);
 
-            var account = new Account
+            var account = accountRepository.Add(new Account
             {
                 Name = accountName
+            });
+
+            var balances = new List<AccountBalance>
+            {
+                new()
+                {
+                    Type = AccountType.Savings,
+                    Balance = request.SavingsBalance,
+                    InterestTypeId = savingsInterestType.Id
+                },
+                new()
+                {
+                    Type = AccountType.Checking,
+                    Balance = request.CheckingBalance,
+                    InterestTypeId = checkingInterestType.Id
+                }
             };
 
-            account.AccountBalances.Add(new AccountBalance
+            foreach (var balance in balances)
             {
-                Type = AccountType.Savings,
-                Balance = request.SavingsBalance,
-                InterestType = savingsInterestType
-            });
+                accountBalanceRepository.Add(balance);
+            }
 
-            account.AccountBalances.Add(new AccountBalance
-            {
-                Type = AccountType.Checking,
-                Balance = request.CheckingBalance,
-                InterestType = checkingInterestType
-            });
-
-            accountRepository.Add(account);
             accountRepository.SaveChanges();
 
             logger.LogDebug("Created account {AccountId} with {BalanceCount} balances for {AccountName}.",
-                account.Id,
-                account.AccountBalances.Count,
-                account.Name);
+            account.Id,
+            balances.Count,
+            account.Name);
 
-            return AccountMapper.ToDTO(account, account.AccountBalances);
+            return AccountMapper.ToDTO(account, balances);
         }
 
         private InterestType EnsureInterestType(decimal rate)
@@ -101,13 +107,11 @@ namespace ManageAccountWebAPI.Services.Implementations
             }
 
             logger.LogInformation("Creating interest type with rate {InterestRate}.", rate);
-            
-            var newInterestType = interestTypeRepository.Add(new InterestType
+
+            return interestTypeRepository.Add(new InterestType
             {
                 Rate = rate
             });
-            interestTypeRepository.SaveChanges();
-            return newInterestType;
         }
 
         public AccountDTO? Update(int id, UpdateAccountRequestDTO request)

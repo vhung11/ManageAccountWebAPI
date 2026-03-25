@@ -19,14 +19,16 @@ namespace ManageAccountWebAPI.Services.Implementations
         public string GenerateToken(User user)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"] ?? throw new InvalidOperationException("SecretKey is not configured")));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                jwtSettings["SecretKey"] ?? throw new InvalidOperationException("SecretKey is not configured")));
 
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("UserId", user.Id.ToString())
+                new Claim("UserId", user.Id.ToString()),
+                new Claim(ClaimTypes.Role, user.Role?.Name ?? "User")
             };
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
