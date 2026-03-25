@@ -3,7 +3,6 @@ using ManageAccountWebAPI.Data.Entities;
 using ManageAccountWebAPI.Controllers.Filters;
 using ManageAccountWebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Xml;
 
 namespace ManageAccountWebAPI.Controllers
 {

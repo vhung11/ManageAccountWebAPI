@@ -24,7 +24,7 @@ namespace ManageAccountWebAPI.Services.Implementations
         {
             _logger.LogInformation("Login attempt for user: {Username}", request.Username);
 
-            var user = _authRepository.GetUserWithRoleByUsername(request.Username);
+            var user = _authRepository.GetUserWithRolesByUsername(request.Username);
             if (user == null || user.PasswordHash != request.Password)
             {
                 _logger.LogWarning("Login failed for username {Username}", request.Username);
@@ -56,13 +56,15 @@ namespace ManageAccountWebAPI.Services.Implementations
             var defaultRole = _authRepository.GetRoleByName("User")
                 ?? throw new InvalidOperationException("Default role 'User' not found. Run database seeder first.");
 
-            _authRepository.AddUser(new User
+            var newUser = new User
             {
                 Username = request.Username,
                 PasswordHash = request.Password,
                 Email = request.Email,
-                RoleId = defaultRole.Id
-            });
+            };
+
+            newUser.UserRoles.Add(new UserRole { RoleId = defaultRole.Id });
+            _authRepository.AddUser(newUser);
             _logger.LogInformation("Register successful for user {Username} with role 'User'", request.Username);
         }
 
@@ -118,8 +120,7 @@ namespace ManageAccountWebAPI.Services.Implementations
                 _logger.LogWarning("User {UserId} not found", userId);
                 return false;
             }
-            var hasPermission = _authRepository
-                .HasPermission(user.Role.Id, permissionCode);
+            var hasPermission = _authRepository.HasPermission(userId, permissionCode);
             _logger.LogInformation("User {UserId} {Result} permission '{Code}'",
                 userId, hasPermission ? "has" : "lacks", permissionCode);
             return hasPermission;

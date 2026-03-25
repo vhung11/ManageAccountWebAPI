@@ -10,7 +10,7 @@ namespace ManageAccountWebAPI.Infrastructure.Context
         {
         }
 
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) 
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
@@ -37,6 +37,7 @@ namespace ManageAccountWebAPI.Infrastructure.Context
         public DbSet<Permission> Permissions { get; set; } = null!;
         public DbSet<RolePermission> RolePermissions { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
+        public DbSet<UserRole> UserRoles { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -69,7 +70,7 @@ namespace ManageAccountWebAPI.Infrastructure.Context
 
                 entity.Property(e => e.Id)
                     .HasColumnName("ID");
-                    
+
                 entity.Property(e => e.LoggedAt)
                     .HasColumnName("LOGGED_AT")
                     .HasColumnType("TIMESTAMP(6)")
@@ -112,25 +113,49 @@ namespace ManageAccountWebAPI.Infrastructure.Context
                     .HasDatabaseName("IX_APP_LOGS_LEVEL_LOGGED_AT");
             });
 
-            modelBuilder.Entity<RolePermission>(entity =>
+            modelBuilder.Entity<UserRole>(entity =>
             {
-                entity.HasKey(up => new { up.RoleId, up.PermissionId });
+                entity.HasKey(ur => new { ur.UserId, ur.RoleId });
 
-                entity.HasOne(up => up.Role)
+                entity.HasOne(ur => ur.Role)
                     .WithMany()
-                    .HasForeignKey(up => up.RoleId)
-                    .OnDelete(DeleteBehavior.Cascade);
-                entity.HasOne(up => up.Permission)
-                    .WithMany()
-                    .HasForeignKey(up => up.PermissionId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .HasForeignKey(ur => ur.RoleId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<User>()
-                .HasOne(u => u.Role)
-                .WithMany()
-                .HasForeignKey(u => u.RoleId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasMany(u => u.UserRoles)
+                .WithOne()
+                .HasForeignKey(ur => ur.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RolePermission>(entity =>
+            {
+                entity.HasKey(rp => new { rp.RoleId, rp.PermissionId });
+
+                entity.HasOne(rp => rp.Permission)
+                    .WithMany()
+                    .HasForeignKey(rp => rp.PermissionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Role>()
+                .HasMany(r => r.RolePermissions)
+                .WithOne()
+                .HasForeignKey(rp => rp.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+
+            modelBuilder.Entity<Role>()
+                .HasIndex(r => r.Name)
+                .IsUnique();
+
+            modelBuilder.Entity<Permission>()
+                .HasIndex(p => p.Code)
+                .IsUnique();
         }
     }
 }

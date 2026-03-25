@@ -7,7 +7,6 @@ namespace ManageAccountWebAPI.Data.Entities
         public string PasswordHash { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
 
-        public int RoleId { get; set; }
-        public Role Role { get; set; } = null!;
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     }
 }

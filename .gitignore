@@ -42,3 +42,6 @@ Desktop.ini
 appsettings.Local.json
 appsettings.*.local.json
 secrets.json
+
+# API client collections
+postman/

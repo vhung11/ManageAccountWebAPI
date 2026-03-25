@@ -8,7 +8,6 @@ namespace ManageAccountWebAPI.Infrastructure.Repositories
         User? GetUserByUsername(string username);
         User? GetUserById(int id);
         User? GetUserByEmail(string email);
-        User? GetUserWithRoleByUsername(string username);
         User AddUser(User user);
         void DeleteUser(User user);
 
@@ -20,7 +19,18 @@ namespace ManageAccountWebAPI.Infrastructure.Repositories
         void DeletePermission(Permission permission);
 
         Role? GetRoleByName(string roleName);
+        ICollection<Role> GetAllRoles();
+        Role? GetRoleById(int id);
+        Role AddRole(Role role);
+        void DeleteRole(Role role);
+
+        void AddUserRole(UserRole userRole);
+        void RemoveUserRole(UserRole userRole);
+
+        void AddRolePermission(RolePermission rolePermission);
+        void RemoveRolePermission(RolePermission rolePermission);
 
         bool HasPermission(int userId, string permissionCode);
+        User? GetUserWithRolesByUsername(string username);
     }
 }

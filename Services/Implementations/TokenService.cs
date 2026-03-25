@@ -27,9 +27,20 @@ namespace ManageAccountWebAPI.Services.Implementations
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("UserId", user.Id.ToString()),
-                new Claim(ClaimTypes.Role, user.Role?.Name ?? "User")
+                new Claim("UserId", user.Id.ToString())
             };
+
+            if (user.UserRoles != null && user.UserRoles.Any())
+            {
+                foreach (var userRole in user.UserRoles.Where(ur => ur.Role != null))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
+                }
+            }
+            else
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "User"));
+            }
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
