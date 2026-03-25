@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace ManageAccountWebAPI.Controllers.Filters
+namespace ManageAccountWebAPI.Infrastructure.Filters
 {
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = true, AllowMultiple = true)]
     public class AuthorizeFunctionAttribute : TypeFilterAttribute

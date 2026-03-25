@@ -1,4 +1,3 @@
-using System.Configuration;
 using ManageAccountWebAPI.Data.Entities;
 using ManageAccountWebAPI.Infrastructure.Context;
 using ManageAccountWebAPI.Infrastructure.Repositories;
@@ -20,11 +19,6 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
         public User? GetUserById(int id) => _context.Users.FirstOrDefault(u => u.Id == id);
 
         public User? GetUserByEmail(string email) => _context.Users.FirstOrDefault(u => u.Email == email);
-
-        public User? GetUserWithRoleByUsername(string username)
-            => _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefault(u => u.Username == username);
 
         public User AddUser(User user)
         {
@@ -65,12 +59,28 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
             _context.SaveChanges();
         }
 
-        public Role? GetRoleByName(string roleName) 
-            => _context.Roles.FirstOrDefault(r => r.Name == roleName);
+        public UserPermission? GetUserPermission(int userId, int permissionId) => _context.UserPermissions.FirstOrDefault(up => up.UserId == userId && up.PermissionId == permissionId);
 
-        public bool HasPermission(int roleId, string permissionCode)
-            => _context.RolePermissions
-                .Any(rp => rp.RoleId == roleId
-                        && rp.Permission.Code == permissionCode);
+        public UserPermission AddUserPermission(UserPermission userPermission)
+        {
+            _context.UserPermissions.Add(userPermission);
+            _context.SaveChanges();
+            return userPermission;
+        }
+
+        public void RemoveUserPermission(UserPermission userPermission)
+        {
+            _context.UserPermissions.Remove(userPermission);
+            _context.SaveChanges();
+        }
+
+        public ICollection<Permission> GetPermissionsForUser(int userId)
+        {
+            return _context.UserPermissions
+                .Include(up => up.Permission)
+                .Where(up => up.UserId == userId)
+                .Select(up => up.Permission)
+                .ToList();
+        }
     }
 }

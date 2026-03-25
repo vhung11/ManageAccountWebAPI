@@ -3,7 +3,7 @@ using ManageAccountWebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace ManageAccountWebAPI.Controllers.Filters
+namespace ManageAccountWebAPI.Infrastructure.Filters
 {
     public class FunctionAuthorizationFilter : IAuthorizationFilter
     {
@@ -27,6 +27,13 @@ namespace ManageAccountWebAPI.Controllers.Filters
 
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("userId");
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            {
+                context.Result = new UnauthorizedResult();
+                return;
+            }
+
+            bool hasPermission = _authService.UserHasPermission(userId, _permissionCode);
+            if (!hasPermission)
             {
                 context.Result = new UnauthorizedResult();
                 return;

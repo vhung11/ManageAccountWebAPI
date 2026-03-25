@@ -1,9 +1,8 @@
 using ManageAccountWebAPI.Data.DTOs;
 using ManageAccountWebAPI.Data.Entities;
-using ManageAccountWebAPI.Controllers.Filters;
+using ManageAccountWebAPI.Infrastructure.Filters;
 using ManageAccountWebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Xml;
 
 namespace ManageAccountWebAPI.Controllers
 {
@@ -44,9 +43,9 @@ namespace ManageAccountWebAPI.Controllers
                 _authService.Register(request);
                 return Ok("Đăng ký thành công.");
             }
-            catch (InvalidOperationException ex)
+            catch (UnauthorizedAccessException ex)
             {
-                return Conflict(ex.Message);
+                return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
@@ -91,7 +90,6 @@ namespace ManageAccountWebAPI.Controllers
             try
             {
                 var permission = _authService.GetPermissionById(id);
-                if (permission == null) return NotFound();
                 return Ok(permission);
             }
             catch (Exception ex)
@@ -102,12 +100,11 @@ namespace ManageAccountWebAPI.Controllers
 
         [HttpPut("permissions/{id:int}")]
         [AuthorizeFunction("Auth.ManagePermissions")]
-        public ActionResult<Permission> UpdatePermission(int id, [FromBody] PermissionRequest request)
+        public ActionResult<Permission> UpdatePermission([FromBody] PermissionRequest request)
         {
             try
             {
-                var permission = _authService.UpdatePermission(id, request);
-                if (permission == null) return NotFound();
+                var permission = _authService.UpdatePermission(request);
                 return Ok(permission);
             }
             catch (Exception ex)
@@ -125,9 +122,50 @@ namespace ManageAccountWebAPI.Controllers
                 _authService.DeletePermission(id);
                 return NoContent();
             }
-            catch (KeyNotFoundException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("users/{userId:int}/permissions/{permissionId:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public IActionResult AssignPermissionToUser(int userId, int permissionId)
+        {
+            try
+            {
+                _authService.AssignPermissionToUser(userId, permissionId);
+                return Ok("Gán quyền cho người dùng thành công.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("users/{userId:int}/permissions/{permissionId:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public IActionResult RemovePermissionFromUser(int userId, int permissionId)
+        {
+            try
+            {
+                _authService.RemovePermissionFromUser(userId, permissionId);
+                return Ok("Xóa quyền khỏi người dùng thành công.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("users/{userId:int}/permissions")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public IActionResult GetPermissionsForUser(int userId)
+        {
+            try
+            {
+                var permissions = _authService.GetPermissionsForUser(userId);
+                return Ok(permissions);
             }
             catch (Exception ex)
             {
@@ -143,7 +181,29 @@ namespace ManageAccountWebAPI.Controllers
                 var result = _authService.UserHasPermission(userId, permissionCode);
                 return Ok(result);
             }
-            catch(Exception ex)
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("user-has-permission-by-resource-and-action")]
+        public IActionResult UserHasPermissionByResourceAndAction(int userId, string resource, string action)
+        {
+            try
+            {
+                var result = _authService.UserHasPermission(userId, resource, action);
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

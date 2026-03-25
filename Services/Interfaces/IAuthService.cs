@@ -11,9 +11,14 @@ namespace ManageAccountWebAPI.Services.Interfaces
         Permission CreatePermission(PermissionRequest request);
         IEnumerable<Permission> GetAllPermissions();
         Permission? GetPermissionById(int id);
-        Permission? UpdatePermission(int id, PermissionRequest request);
+        Permission? UpdatePermission(PermissionRequest request);
         void DeletePermission(int id);
 
+        void AssignPermissionToUser(int userId, int permissionId);
+        void RemovePermissionFromUser(int userId, int permissionId);
+        ICollection<Permission> GetPermissionsForUser(int userId);
+
         bool UserHasPermission(int userId, string permissionCode);
+        bool UserHasPermission(int userId, string resource, string action);
     }
 }

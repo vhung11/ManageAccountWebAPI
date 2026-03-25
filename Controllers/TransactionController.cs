@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ManageAccountWebAPI.Services.Interfaces;
-using ManageAccountWebAPI.Controllers.Filters;
+using ManageAccountWebAPI.Infrastructure.Filters;
 
 namespace ManageAccountWebAPI.Controllers
 {

@@ -1,6 +1,5 @@
 using ManageAccountWebAPI.Data.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Net.Http.Headers;
 
 namespace ManageAccountWebAPI.Infrastructure.Context
 {
@@ -35,8 +34,8 @@ namespace ManageAccountWebAPI.Infrastructure.Context
         public DbSet<AppLog> AppLogs { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<Permission> Permissions { get; set; } = null!;
-        public DbSet<RolePermission> RolePermissions { get; set; } = null!;
-        public DbSet<Role> Roles { get; set; } = null!;
+        public DbSet<UserPermission> UserPermissions { get; set; } = null!;
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -112,25 +111,19 @@ namespace ManageAccountWebAPI.Infrastructure.Context
                     .HasDatabaseName("IX_APP_LOGS_LEVEL_LOGGED_AT");
             });
 
-            modelBuilder.Entity<RolePermission>(entity =>
+            modelBuilder.Entity<UserPermission>(entity =>
             {
-                entity.HasKey(up => new { up.RoleId, up.PermissionId });
+                entity.HasKey(up => new { up.UserId, up.PermissionId });
 
-                entity.HasOne(up => up.Role)
+                entity.HasOne(up => up.User)
                     .WithMany()
-                    .HasForeignKey(up => up.RoleId)
+                    .HasForeignKey(up => up.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(up => up.Permission)
                     .WithMany()
                     .HasForeignKey(up => up.PermissionId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Role)
-                .WithMany()
-                .HasForeignKey(u => u.RoleId)
-                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
