@@ -32,6 +32,11 @@ namespace ManageAccountWebAPI.Infrastructure.Context
         public DbSet<AccountBalance> AccountBalances { get; set; } = null!;
         public DbSet<InterestType> InterestTypes { get; set; } = null!;
         public DbSet<AppLog> AppLogs { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Role> Roles { get; set; } = null!;
+        public DbSet<Permission> Permissions { get; set; } = null!;
+        public DbSet<RolePermission> RolePermissions { get; set; } = null!;
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,7 +49,7 @@ namespace ManageAccountWebAPI.Infrastructure.Context
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AccountBalance>()
-                .HasOne<InterestType>()
+                .HasOne(ab => ab.InterestType)
                 .WithMany()
                 .HasForeignKey(ab => ab.InterestTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
@@ -105,6 +110,47 @@ namespace ManageAccountWebAPI.Infrastructure.Context
 
                 entity.HasIndex(e => new { e.LogLevel, e.LoggedAt })
                     .HasDatabaseName("IX_APP_LOGS_LEVEL_LOGGED_AT");
+            });
+
+            // Role configuration
+            modelBuilder.Entity<Role>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.Name)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.HasIndex(r => r.Name)
+                    .IsUnique();
+
+                entity.Property(r => r.Description)
+                    .HasMaxLength(200);
+            });
+
+            // User -> Role (many-to-one)
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasOne(u => u.Role)
+                    .WithMany(r => r.Users)
+                    .HasForeignKey(u => u.RoleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // RolePermission (many-to-many join)
+            modelBuilder.Entity<RolePermission>(entity =>
+            {
+                entity.HasKey(rp => new { rp.RoleId, rp.PermissionId });
+
+                entity.HasOne(rp => rp.Role)
+                    .WithMany(r => r.RolePermissions)
+                    .HasForeignKey(rp => rp.RoleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(rp => rp.Permission)
+                    .WithMany(p => p.RolePermissions)
+                    .HasForeignKey(rp => rp.PermissionId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

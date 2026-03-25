@@ -7,5 +7,6 @@ namespace ManageAccountWebAPI.Data.Entities
         public string? Type { get; set; }
         public decimal Balance { get; set; }
         public int InterestTypeId { get; set; }
+        public virtual InterestType InterestType { get; set; } = null!;
     }
 }

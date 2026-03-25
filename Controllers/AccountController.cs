@@ -1,4 +1,5 @@
 using ManageAccountWebAPI.Data.DTOs;
+using ManageAccountWebAPI.Infrastructure.Filters;
 using ManageAccountWebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,6 +26,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [AuthorizeFunction("Account.Read")]
         public ActionResult<AccountDTO> GetById(int id)
         {
             logger.LogInformation("Fetching account {AccountId}.", id);
@@ -40,6 +42,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost]
+        [AuthorizeFunction("Account.Create")]
         public ActionResult<AccountDTO> Create([FromBody] CreateAccountRequestDTO request)
         {
             logger.LogInformation("Received request to create account for {AccountName}.", request.Name);
@@ -49,6 +52,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [AuthorizeFunction("Account.Update")]
         public ActionResult<AccountDTO> Update(int id, [FromBody] UpdateAccountRequestDTO request)
         {
             logger.LogInformation("Received request to update account {AccountId}.", id);
@@ -64,6 +68,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [AuthorizeFunction("Account.Delete")]
         public ActionResult Delete(int id)
         {
             logger.LogInformation("Received request to delete account {AccountId}.", id);
@@ -79,6 +84,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("ranked")]
+        [AuthorizeFunction("Account.Read")]
         public ActionResult<IEnumerable<AccountDTO>> GetAccountsRankedByBalance()
         {
             var accounts = accountService.GetAccountsRankedByBalance().ToList();
@@ -87,6 +93,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("below-balance")]
+        [AuthorizeFunction("Account.Read")]
         public ActionResult<IEnumerable<AccountDTO>> GetAccountsBelowBalance([FromQuery] decimal threshold)
         {
             logger.LogInformation("Fetching accounts with total balance below {Threshold}.", threshold);
@@ -96,12 +103,22 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("top-checking/{topN:int}")]
+        [AuthorizeFunction("Account.Read")]
         public ActionResult<IEnumerable<AccountDTO>> GetTopNCheckingAccounts(int topN)
         {
             logger.LogInformation("Fetching top {TopN} checking accounts with the lowest balances.", topN);
             var accounts = accountService.GetTopNCheckingAccounts(topN).ToList();
             logger.LogInformation("Returned {AccountCount} checking accounts for top {TopN} request.", accounts.Count, topN);
             return Ok(accounts);
+        }
+
+        [HttpPost("apply-interest")]
+        [AuthorizeFunction("Account.ApplyInterest")]
+        public ActionResult ApplyInterest()
+        {
+            accountService.ApplyInterest();
+            logger.LogInformation("Applied interest to all accounts.");
+            return Ok();
         }
     }
 }
