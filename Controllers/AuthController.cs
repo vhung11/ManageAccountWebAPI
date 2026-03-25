@@ -147,5 +147,220 @@ namespace ManageAccountWebAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPost("roles")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult<Role> CreateRole([FromBody] RoleRequest request)
+        {
+            try
+            {
+                var role = _authService.CreateRole(request);
+                return Ok(role);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("roles")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult<IEnumerable<Role>> GetAllRoles()
+        {
+            try
+            {
+                var roles = _authService.GetAllRoles();
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("roles/{id:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult<Role> GetRoleById(int id)
+        {
+            try
+            {
+                var role = _authService.GetRoleById(id);
+                if (role == null) return NotFound();
+                return Ok(role);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("roles/{id:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult<Role> UpdateRole(int id, [FromBody] RoleRequest request)
+        {
+            try
+            {
+                var role = _authService.UpdateRole(id, request);
+                if (role == null) return NotFound();
+                return Ok(role);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("roles/{id:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult DeleteRole(int id)
+        {
+            try
+            {
+                _authService.DeleteRole(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("users/assign-role")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult AssignRoleToUser([FromBody] AssignRoleToUserRequest request)
+        {
+            try
+            {
+                _authService.AssignRoleToUser(request);
+                return Ok("Gán vai trò cho người dùng thành công.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("users/remove-role")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult RemoveRoleFromUser([FromBody] AssignRoleToUserRequest request)
+        {
+            try
+            {
+                _authService.RemoveRoleFromUser(request);
+                return Ok("Thu hồi vai trò của người dùng thành công.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("roles/assign-permission")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult AssignPermissionToRole([FromBody] AssignPermissionToRoleRequest request)
+        {
+            try
+            {
+                _authService.AssignPermissionToRole(request);
+                return Ok("Gán quyền cho vai trò thành công.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("roles/remove-permission")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult RemovePermissionFromRole([FromBody] AssignPermissionToRoleRequest request)
+        {
+            try
+            {
+                _authService.RemovePermissionFromRole(request);
+                return Ok("Thu hồi quyền khỏi vai trò thành công.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("users/assign-permission")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult AssignPermissionToUser([FromBody] AssignPermissionToUserRequest request)
+        {
+            try
+            {
+                _authService.AssignPermissionToUser(request);
+                return Ok("Gán quyền cho người dùng thành công.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("users/remove-permission")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult RemovePermissionFromUser([FromBody] AssignPermissionToUserRequest request)
+        {
+            try
+            {
+                _authService.RemovePermissionFromUser(request);
+                return Ok("Thu hồi quyền của người dùng thành công.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

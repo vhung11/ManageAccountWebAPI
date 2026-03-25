@@ -74,6 +74,13 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
             return role;
         }
 
+        public Role UpdateRole(Role role)
+        {
+            _context.Roles.Update(role);
+            _context.SaveChanges();
+            return role;
+        }
+
         public void DeleteRole(Role role)
         {
             _context.Roles.Remove(role);
@@ -85,6 +92,9 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
             _context.UserRoles.Add(userRole);
             _context.SaveChanges();
         }
+
+        public UserRole? GetUserRole(int userId, int roleId)
+            => _context.UserRoles.FirstOrDefault(ur => ur.UserId == userId && ur.RoleId == roleId);
 
         public void RemoveUserRole(UserRole userRole)
         {
@@ -98,9 +108,27 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
             _context.SaveChanges();
         }
 
+        public RolePermission? GetRolePermission(int roleId, int permissionId)
+            => _context.RolePermissions.FirstOrDefault(rp => rp.RoleId == roleId && rp.PermissionId == permissionId);
+
         public void RemoveRolePermission(RolePermission rolePermission)
         {
             _context.RolePermissions.Remove(rolePermission);
+            _context.SaveChanges();
+        }
+
+        public void AddUserPermission(UserPermission userPermission)
+        {
+            _context.UserPermissions.Add(userPermission);
+            _context.SaveChanges();
+        }
+
+        public UserPermission? GetUserPermission(int userId, int permissionId)
+            => _context.UserPermissions.FirstOrDefault(up => up.UserId == userId && up.PermissionId == permissionId);
+
+        public void RemoveUserPermission(UserPermission userPermission)
+        {
+            _context.UserPermissions.Remove(userPermission);
             _context.SaveChanges();
         }
 
@@ -114,8 +142,18 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
 
         public bool HasPermission(int userId, string permissionCode)
         {
+            var hasDirectPermission = _context.UserPermissions
+                .Any(up => up.UserId == userId && up.Permission.Code == permissionCode);
+            if (hasDirectPermission)
+            {
+                return true;
+            }
+
             var userRoles = _context.UserRoles.Where(ur => ur.UserId == userId).Select(ur => ur.RoleId).ToList();
-            if (!userRoles.Any()) return false;
+            if (!userRoles.Any())
+            {
+                return false;
+            }
 
             return _context.RolePermissions
                 .Any(rp => userRoles.Contains(rp.RoleId) && rp.Permission.Code == permissionCode);

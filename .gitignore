@@ -45,3 +45,6 @@ secrets.json
 
 # API client collections
 postman/
+
+# Entity Framework migrations
+Migrations/

@@ -22,13 +22,20 @@ namespace ManageAccountWebAPI.Infrastructure.Repositories
         ICollection<Role> GetAllRoles();
         Role? GetRoleById(int id);
         Role AddRole(Role role);
+        Role UpdateRole(Role role);
         void DeleteRole(Role role);
 
         void AddUserRole(UserRole userRole);
+        UserRole? GetUserRole(int userId, int roleId);
         void RemoveUserRole(UserRole userRole);
 
         void AddRolePermission(RolePermission rolePermission);
+        RolePermission? GetRolePermission(int roleId, int permissionId);
         void RemoveRolePermission(RolePermission rolePermission);
+
+        void AddUserPermission(UserPermission userPermission);
+        UserPermission? GetUserPermission(int userId, int permissionId);
+        void RemoveUserPermission(UserPermission userPermission);
 
         bool HasPermission(int userId, string permissionCode);
         User? GetUserWithRolesByUsername(string username);
