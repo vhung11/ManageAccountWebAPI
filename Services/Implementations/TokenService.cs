@@ -30,18 +30,6 @@ namespace ManageAccountWebAPI.Services.Implementations
                 new Claim("UserId", user.Id.ToString())
             };
 
-            if (user.UserRoles != null && user.UserRoles.Any())
-            {
-                foreach (var userRole in user.UserRoles.Where(ur => ur.Role != null))
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
-                }
-            }
-            else
-            {
-                claims.Add(new Claim(ClaimTypes.Role, "User"));
-            }
-
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(

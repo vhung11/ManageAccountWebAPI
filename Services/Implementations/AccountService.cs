@@ -12,48 +12,45 @@ namespace ManageAccountWebAPI.Services.Implementations
         private readonly IAccountRepository accountRepository;
         private readonly IAccountBalanceRepository accountBalanceRepository;
         private readonly IInterestTypeRepository interestTypeRepository;
+        private readonly IAuthRepository authRepository;
         private readonly ILogger<AccountService> logger;
 
-        public AccountService(IAccountRepository accountRepository, IAccountBalanceRepository accountBalanceRepository, IInterestTypeRepository interestTypeRepository, ILogger<AccountService> logger)
+        public AccountService(IAccountRepository accountRepository, IAccountBalanceRepository accountBalanceRepository, IInterestTypeRepository interestTypeRepository, IAuthRepository authRepository, ILogger<AccountService> logger)
         {
             this.accountRepository = accountRepository;
             this.accountBalanceRepository = accountBalanceRepository;
             this.interestTypeRepository = interestTypeRepository;
+            this.authRepository = authRepository;
             this.logger = logger;
         }
 
-        public IEnumerable<AccountDTO> GetAll()
+        public IEnumerable<AccountDTO> GetAllByUserId(int userId)
         {
-            return GetAllAccountDTOs();
+            return GetAllAccountDTOsByUserId(userId);
         }
 
-        public AccountDTO? GetById(int id)
+        public AccountDTO? GetById(int userId, int accountId)
         {
-            var account = accountRepository.GetById(id);
-            if (account is null)
+            var account = accountRepository.GetById(accountId);
+            if (account is null || account.UserId != userId)
             {
-                logger.LogWarning("Không tìm thấy tài khoản có id = {AccountId}.", id);
+                logger.LogWarning("Không tìm thấy tài khoản có id = {AccountId} cho người dùng {UserId}.", accountId, userId);
                 return null;
             }
 
-            var accountBalances = accountBalanceRepository.GetByAccountId(id);
-            logger.LogDebug("Loaded {BalanceCount} account balances for account {AccountId}.", accountBalances.Count(), id);
-            return AccountMapper.ToDTO(account, accountBalances);
+            var accountBalances = accountBalanceRepository.GetByAccountId(accountId);
+            logger.LogDebug("Loaded {BalanceCount} account balances for account {AccountId}.", accountBalances.Count(), accountId);
+            var user = authRepository.GetUserById(userId);
+            var fullName = user?.FullName ?? string.Empty;
+            return AccountMapper.ToDTO(account, accountBalances, fullName);
         }
 
-        public AccountDTO Create(CreateAccountRequestDTO request)
+        public AccountDTO Create(int userId, CreateAccountRequestDTO request)
         {
-            var accountName = request.Name.Trim();
-            if (string.IsNullOrWhiteSpace(accountName))
-            {
-                logger.LogWarning("Rejected account creation because the supplied account name was empty.");
-                throw new ArgumentException("Tên tài khoản là bắt buộc.", nameof(request));
-            }
-
             if (logger.IsEnabled(LogLevel.Information))
             {
-                logger.LogInformation("Creating new account with name '{AccountName}' and initial balances: Savings = {SavingsBalance}, Checking = {CheckingBalance}.",
-                    accountName,
+                logger.LogInformation("Creating new account for user {UserId} with initial balances: Savings = {SavingsBalance}, Checking = {CheckingBalance}.",
+                    userId,
                     request.SavingsBalance,
                     request.CheckingBalance);
             }
@@ -63,7 +60,7 @@ namespace ManageAccountWebAPI.Services.Implementations
 
             var account = accountRepository.Add(new Account
             {
-                Name = accountName
+                UserId = userId
             });
 
             var balances = new List<AccountBalance>
@@ -89,12 +86,14 @@ namespace ManageAccountWebAPI.Services.Implementations
 
             accountRepository.SaveChanges();
 
-            logger.LogDebug("Created account {AccountId} with {BalanceCount} balances for {AccountName}.",
+            logger.LogDebug("Created account {AccountId} with {BalanceCount} balances for user {UserId}.",
             account.Id,
             balances.Count,
-            account.Name);
+            userId);
 
-            return AccountMapper.ToDTO(account, balances);
+            var user = authRepository.GetUserById(userId);
+            var fullName = user?.FullName ?? string.Empty;
+            return AccountMapper.ToDTO(account, balances, fullName);
         }
 
         private InterestType EnsureInterestType(decimal rate)
@@ -114,50 +113,21 @@ namespace ManageAccountWebAPI.Services.Implementations
             });
         }
 
-        public AccountDTO? Update(int id, UpdateAccountRequestDTO request)
+        public bool Delete(int userId, int accountId)
         {
-            logger.LogInformation("Updating account with id {AccountId}.", id);
+            logger.LogInformation("Deleting account with id {AccountId} for user {UserId}.", accountId, userId);
 
-            var account = accountRepository.GetById(id);
-            if (account is null)
+            var account = accountRepository.GetById(accountId);
+            if (account is null || account.UserId != userId)
             {
-                logger.LogWarning("Không tìm thấy tài khoản có id = {AccountId} để cập nhật.", id);
-                return null;
-            }
-
-            var accountName = request.Name.Trim();
-            if (string.IsNullOrWhiteSpace(accountName))
-            {
-                logger.LogWarning("Rejected update for account {AccountId} because the supplied account name was empty.", id);
-                throw new ArgumentException("Tên tài khoản là bắt buộc.", nameof(request));
-            }
-
-            account.Name = accountName;
-
-            accountRepository.Update(account);
-            accountRepository.SaveChanges();
-
-            var updatedBalances = accountBalanceRepository.GetByAccountId(id).ToList();
-
-            logger.LogInformation("Updated account {AccountId} successfully.", id);
-            return AccountMapper.ToDTO(account, updatedBalances);
-        }
-
-        public bool Delete(int id)
-        {
-            logger.LogInformation("Deleting account with id {AccountId}.", id);
-
-            var account = accountRepository.GetById(id);
-            if (account is null)
-            {
-                logger.LogWarning("Không tìm thấy tài khoản có id = {AccountId} để xóa.", id);
+                logger.LogWarning("Không tìm thấy tài khoản có id = {AccountId} cho người dùng {UserId} để xóa.", accountId, userId);
                 return false;
             }
 
             accountRepository.Delete(account);
             accountRepository.SaveChanges();
 
-            logger.LogInformation("Deleted account with id {AccountId}.", id);
+            logger.LogInformation("Deleted account with id {AccountId}.", accountId);
             return true;
         }
 
@@ -166,7 +136,7 @@ namespace ManageAccountWebAPI.Services.Implementations
             var rankedAccounts = GetAllAccountDTOs()
                 .OrderByDescending(a => a.TotalBalance)
                 .ToList();
-            logger.LogInformation("Loaded {Count} accounts ranked by balance.", rankedAccounts.Count);
+            logger.LogInformation("Loaded {Count} accounts ranked by balance system-wide.", rankedAccounts.Count);
 
             return rankedAccounts;
         }
@@ -179,9 +149,9 @@ namespace ManageAccountWebAPI.Services.Implementations
 
             if (belowBalanceAccounts.Count == 0)
             {
-                logger.LogInformation("No accounts found with total balance below {Threshold}.", threshold);
+                logger.LogInformation("No accounts found with total balance below {Threshold} system-wide.", threshold);
             }
-            logger.LogInformation("Loaded {Count} accounts with balances below {Threshold}.", belowBalanceAccounts.Count, threshold);
+            logger.LogInformation("Loaded {Count} accounts with balances below {Threshold} system-wide.", belowBalanceAccounts.Count, threshold);
 
             return belowBalanceAccounts;
         }
@@ -189,10 +159,10 @@ namespace ManageAccountWebAPI.Services.Implementations
         public IEnumerable<AccountDTO> GetTopNCheckingAccounts(int topN)
         {
             var topCheckingAccounts = GetAllAccountDTOs()
-                .OrderBy(a => a.CheckingBalance)
+                .OrderByDescending(a => a.CheckingBalance)
                 .Take(topN)
                 .ToList();
-            logger.LogInformation("Retrieved {Count} checking accounts for top {TopN} lowest balance request.", topCheckingAccounts.Count, topN);
+            logger.LogInformation("Retrieved {Count} checking accounts for top {TopN} lowest balance request system-wide.", topCheckingAccounts.Count, topN);
 
             return topCheckingAccounts;
         }
@@ -243,13 +213,41 @@ namespace ManageAccountWebAPI.Services.Implementations
             logger.LogInformation("Applied interest to {UpdatedBalanceCount} balances from account service.", updatedBalanceCount);
         }
 
+        private List<AccountDTO> GetAllAccountDTOsByUserId(int userId)
+        {
+            var accounts = accountRepository.GetByUserId(userId).ToList();
+            var accountIds = accounts.Select(a => a.Id).ToList();
+            var accountBalances = accountBalanceRepository.GetAll().Where(b => accountIds.Contains(b.AccountId)).ToList();
+            logger.LogDebug("Loaded {AccountCount} accounts and {BalanceCount} account balances from database for user {UserId}", accounts.Count, accountBalances.Count, userId);
+
+            var user = authRepository.GetUserById(userId);
+            var fullName = user?.FullName ?? string.Empty;
+            return AccountMapper.ToDTOList(accounts, accountBalances, fullName);
+        }
+
         private List<AccountDTO> GetAllAccountDTOs()
         {
-            var accounts = accountRepository.GetAll();
-            var accountBalances = accountBalanceRepository.GetAll();
-            logger.LogDebug("Loaded {AccountCount} accounts and {BalanceCount} account balances from database", accounts.Count(), accountBalances.Count());
+            var accounts = accountRepository.GetAll().ToList();
+            var accountBalances = accountBalanceRepository.GetAll().ToList();
+            logger.LogDebug("Loaded {AccountCount} accounts and {BalanceCount} account balances from database system-wide", accounts.Count, accountBalances.Count);
 
-            return AccountMapper.ToDTOList(accounts, accountBalances);
+            var result = new List<AccountDTO>();
+            var cachedUserNames = new Dictionary<int, string>();
+
+            foreach (var account in accounts)
+            {
+                if (!cachedUserNames.TryGetValue(account.UserId, out var fullName))
+                {
+                    var user = authRepository.GetUserById(account.UserId);
+                    fullName = user?.FullName ?? string.Empty;
+                    cachedUserNames[account.UserId] = fullName;
+                }
+
+                var balances = accountBalances.Where(b => b.AccountId == account.Id);
+                result.Add(AccountMapper.ToDTO(account, balances, fullName));
+            }
+
+            return result;
         }
     }
 }

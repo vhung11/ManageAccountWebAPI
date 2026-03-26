@@ -3,11 +3,13 @@ namespace ManageAccountWebAPI.Data.Entities
     public class User
     {
         public int Id { get; set; }
+        public string FullName { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
 
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
         public ICollection<UserPermission> UserPermissions { get; set; } = new List<UserPermission>();
+        public ICollection<Account> Accounts { get; set; } = new List<Account>();
     }
 }

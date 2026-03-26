@@ -7,6 +7,7 @@ namespace ManageAccountWebAPI.Infrastructure.Repositories
     /// </summary>
     public interface IAccountRepository : IBaseRepository<Account>
     {
+        IEnumerable<Account> GetByUserId(int userId);
         bool Exists(int id);
     }
 }

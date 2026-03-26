@@ -135,6 +135,11 @@ namespace ManageAccountWebAPI.Infrastructure.Context
                     .WithOne()
                     .HasForeignKey(up => up.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(u => u.Accounts)
+                    .WithOne()
+                    .HasForeignKey(a => a.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<RolePermission>(entity =>

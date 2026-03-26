@@ -16,6 +16,11 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
 
         protected override DbSet<Account> DbSet => _context.Accounts;
 
+        public IEnumerable<Account> GetByUserId(int userId)
+        {
+            return _context.Accounts.Where(a => a.UserId == userId).ToList();
+        }
+
         public bool Exists(int id)
         {
             return _context.Accounts.Any(a => a.Id == id);

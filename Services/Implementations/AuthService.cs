@@ -61,6 +61,7 @@ namespace ManageAccountWebAPI.Services.Implementations
                 Username = request.Username,
                 PasswordHash = request.Password,
                 Email = request.Email,
+                FullName = request.FullName
             };
 
             newUser.UserRoles.Add(new UserRole { RoleId = defaultRole.Id });
