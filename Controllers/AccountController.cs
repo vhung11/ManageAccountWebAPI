@@ -1,5 +1,5 @@
 using ManageAccountWebAPI.Data.DTOs;
-using ManageAccountWebAPI.Infrastructure.Filters;
+using ManageAccountWebAPI.Controllers.Filters;
 using ManageAccountWebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
