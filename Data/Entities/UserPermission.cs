@@ -1,11 +1,11 @@
 namespace ManageAccountWebAPI.Data.Entities
 {
-    public class RolePermission
+    public class UserPermission
     {
-        public int RoleId { get; set; }
+        public int UserId { get; set; }
         public int PermissionId { get; set; }
 
-        public Role Role { get; set; } = null!;
+        public User User { get; set; } = null!;
         public Permission Permission { get; set; } = null!;
     }
 }
