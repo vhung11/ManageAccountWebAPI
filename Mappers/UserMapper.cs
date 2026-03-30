@@ -9,6 +9,7 @@ namespace ManageAccountWebAPI.Mappers
         {
             return new UserDTO
             {
+                FullName = user.FullName,
                 Username = user.Username,
                 Email = user.Email
             };

@@ -1,32 +1,17 @@
 using ManageAccountWebAPI.Data.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Net.Http.Headers;
 
 namespace ManageAccountWebAPI.Infrastructure.Context
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext()
-        {
-        }
-
+        /// <summary>
+        /// Options are always supplied externally (Program.cs at runtime,
+        /// ApplicationDbContextFactory at design-time). No inline configuration here.
+        /// </summary>
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", optional: false)
-                    .Build();
-
-                var connectionString = configuration.GetConnectionString("OracleConnection");
-                optionsBuilder.UseOracle(connectionString);
-            }
         }
 
         public DbSet<Account> Accounts { get; set; } = null!;
@@ -38,6 +23,7 @@ namespace ManageAccountWebAPI.Infrastructure.Context
         public DbSet<RolePermission> RolePermissions { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
         public DbSet<UserRole> UserRoles { get; set; } = null!;
+        public DbSet<UserPermission> UserPermissions { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -123,11 +109,23 @@ namespace ManageAccountWebAPI.Infrastructure.Context
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.UserRoles)
-                .WithOne()
-                .HasForeignKey(ur => ur.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasMany(u => u.UserRoles)
+                    .WithOne()
+                    .HasForeignKey(ur => ur.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(u => u.UserPermissions)
+                    .WithOne()
+                    .HasForeignKey(up => up.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(u => u.Accounts)
+                    .WithOne()
+                    .HasForeignKey(a => a.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
 
             modelBuilder.Entity<RolePermission>(entity =>
             {
@@ -156,6 +154,16 @@ namespace ManageAccountWebAPI.Infrastructure.Context
             modelBuilder.Entity<Permission>()
                 .HasIndex(p => p.Code)
                 .IsUnique();
+
+            modelBuilder.Entity<UserPermission>(entity =>
+            {
+                entity.HasKey(up => new { up.UserId, up.PermissionId });
+
+                entity.HasOne(up => up.Permission)
+                    .WithMany()
+                    .HasForeignKey(up => up.PermissionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
     }
 }

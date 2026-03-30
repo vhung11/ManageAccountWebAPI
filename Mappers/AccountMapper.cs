@@ -7,7 +7,7 @@ namespace ManageAccountWebAPI.Mappers
     /// <summary>
     /// Mapper để chuyển đổi giữa Account Entity và AccountDTO
     /// </summary>
-    public static class     AccountMapper
+    public static class AccountMapper
     {
         /// <summary>
         /// Map từ Account Entity sang AccountDTO
@@ -15,14 +15,15 @@ namespace ManageAccountWebAPI.Mappers
         /// <param name="account">Account entity</param>
         /// <param name="accountBalances">Danh sách AccountBalance của account</param>
         /// <returns>AccountDTO</returns>
-        public static AccountDTO ToDTO(Account account, IEnumerable<AccountBalance> accountBalances)
+        public static AccountDTO ToDTO(Account account, IEnumerable<AccountBalance> accountBalances, string fullName)
         {
             var balanceList = accountBalances.ToList();
-            
+
             return new AccountDTO
             {
-                Id = account.Id,
-                Name = account.Name ?? string.Empty,
+                UserId = account.UserId,
+                FullName = fullName,
+                AccountId = account.Id,
                 SavingsBalance = balanceList.FirstOrDefault(b => b.Type == AccountType.Savings)?.Balance ?? 0,
                 CheckingBalance = balanceList.FirstOrDefault(b => b.Type == AccountType.Checking)?.Balance ?? 0
             };
@@ -35,8 +36,9 @@ namespace ManageAccountWebAPI.Mappers
         /// <param name="allAccountBalances">Tất cả AccountBalances trong hệ thống</param>
         /// <returns>Danh sách AccountDTO</returns>
         public static List<AccountDTO> ToDTOList(
-            IEnumerable<Account> accounts, 
-            IEnumerable<AccountBalance> allAccountBalances)
+            IEnumerable<Account> accounts,
+            IEnumerable<AccountBalance> allAccountBalances,
+            string fullName)
         {
             var result = new List<AccountDTO>();
             var balanceList = allAccountBalances.ToList();
@@ -44,7 +46,7 @@ namespace ManageAccountWebAPI.Mappers
             foreach (var account in accounts)
             {
                 var accountBalances = balanceList.Where(b => b.AccountId == account.Id);
-                result.Add(ToDTO(account, accountBalances));
+                result.Add(ToDTO(account, accountBalances, fullName));
             }
 
             return result;
