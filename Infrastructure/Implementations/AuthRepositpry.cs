@@ -60,13 +60,13 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
             _context.SaveChanges();
         }
 
-        public Role? GetRoleByName(string roleName) 
+        public Role? GetRoleByName(string roleName)
             => _context.Roles.FirstOrDefault(r => r.Name == roleName);
 
         public ICollection<Role> GetAllRoles() => _context.Roles.ToList();
-        
+
         public Role? GetRoleById(int id) => _context.Roles.FirstOrDefault(r => r.Id == id);
-        
+
         public Role AddRole(Role role)
         {
             _context.Roles.Add(role);
@@ -140,7 +140,7 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
                 .FirstOrDefault(u => u.Username == username);
         }
 
-        public bool HasPermission(int userId, string permissionCode)
+        public bool UserHasPermission(int userId, string permissionCode)
         {
             var hasDirectPermission = _context.UserPermissions
                 .Any(up => up.UserId == userId && up.Permission.Code == permissionCode);
@@ -157,6 +157,35 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
 
             return _context.RolePermissions
                 .Any(rp => userRoles.Contains(rp.RoleId) && rp.Permission.Code == permissionCode);
+        }
+
+        public ICollection<Role> GetRolesByUserId(int userId)
+        {
+            return _context.UserRoles
+                .Where(ur => ur.UserId == userId)
+                .Select(ur => ur.Role!)
+                .ToList();
+        }
+
+        public ICollection<Permission> GetPermissionsByRoleId(int roleId)
+        {
+            return _context.RolePermissions
+                .Where(rp => rp.RoleId == roleId)
+                .Select(rp => rp.Permission!)
+                .ToList();
+        }
+
+        public ICollection<Permission> GetPermissionsByUserId(int userId)
+        {
+            return _context.UserPermissions
+                .Where(up => up.UserId == userId)
+                .Select(up => up.Permission!)
+                .ToList();
+        }
+
+        public ICollection<User> GetAllUsers()
+        {
+            return _context.Users.ToList();
         }
     }
 }

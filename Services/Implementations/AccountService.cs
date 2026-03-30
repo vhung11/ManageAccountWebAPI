@@ -58,42 +58,37 @@ namespace ManageAccountWebAPI.Services.Implementations
             var savingsInterestType = EnsureInterestType(4.7m);
             var checkingInterestType = EnsureInterestType(5.1m);
 
-            var account = accountRepository.Add(new Account
+            var account = new Account
             {
-                UserId = userId
-            });
-
-            var balances = new List<AccountBalance>
-            {
-                new()
+                UserId = userId,
+                AccountBalances = new List<AccountBalance>
                 {
-                    Type = AccountType.Savings,
-                    Balance = request.SavingsBalance,
-                    InterestTypeId = savingsInterestType.Id
-                },
-                new()
-                {
-                    Type = AccountType.Checking,
-                    Balance = request.CheckingBalance,
-                    InterestTypeId = checkingInterestType.Id
+                    new()
+                    {
+                        Type = AccountType.Savings,
+                        Balance = request.SavingsBalance,
+                        InterestType = savingsInterestType
+                    },
+                    new()
+                    {
+                        Type = AccountType.Checking,
+                        Balance = request.CheckingBalance,
+                        InterestType = checkingInterestType
+                    }
                 }
             };
 
-            foreach (var balance in balances)
-            {
-                accountBalanceRepository.Add(balance);
-            }
-
+            accountRepository.Add(account);
             accountRepository.SaveChanges();
 
             logger.LogDebug("Created account {AccountId} with {BalanceCount} balances for user {UserId}.",
             account.Id,
-            balances.Count,
+            account.AccountBalances.Count,
             userId);
 
             var user = authRepository.GetUserById(userId);
             var fullName = user?.FullName ?? string.Empty;
-            return AccountMapper.ToDTO(account, balances, fullName);
+            return AccountMapper.ToDTO(account, account.AccountBalances, fullName);
         }
 
         private InterestType EnsureInterestType(decimal rate)

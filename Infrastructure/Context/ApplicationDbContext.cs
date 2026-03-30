@@ -1,32 +1,17 @@
 using ManageAccountWebAPI.Data.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Net.Http.Headers;
 
 namespace ManageAccountWebAPI.Infrastructure.Context
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext()
-        {
-        }
-
+        /// <summary>
+        /// Options are always supplied externally (Program.cs at runtime,
+        /// ApplicationDbContextFactory at design-time). No inline configuration here.
+        /// </summary>
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", optional: false)
-                    .Build();
-
-                var connectionString = configuration.GetConnectionString("OracleConnection");
-                optionsBuilder.UseOracle(connectionString);
-            }
         }
 
         public DbSet<Account> Accounts { get; set; } = null!;

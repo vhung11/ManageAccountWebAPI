@@ -28,5 +28,10 @@ namespace ManageAccountWebAPI.Services.Interfaces
         void RemovePermissionFromUser(AssignPermissionToUserRequest request);
 
         bool UserHasPermission(int userId, string permissionCode);
+        UserDTO GetCurrentUser(int userId);
+        IEnumerable<RoleDTO> GetRolesByUserId(int userId);
+        IEnumerable<Permission> GetPermissionsByUserId(int userId);
+        IEnumerable<Permission> GetPermissionsByRoleId(int roleId);
+        IEnumerable<UserDTO> GetAllUsers();
     }
 }

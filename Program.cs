@@ -1,6 +1,7 @@
 using ManageAccountWebAPI.Infrastructure.Context;
 using ManageAccountWebAPI.Infrastructure.Implementations;
 using ManageAccountWebAPI.Infrastructure.Repositories;
+using ManageAccountWebAPI.Infrastructure.Settings;
 using ManageAccountWebAPI.Services.Implementations;
 using ManageAccountWebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -69,11 +70,24 @@ try
 	builder.Services.AddScoped<IAccountService, AccountService>();
 	builder.Services.AddScoped<ITransactionService, TransactionService>();
 	builder.Services.AddScoped<IAuthService, AuthService>();
-	builder.Services.AddScoped<ITokenService, TokenService>();
+	// TokenService has no scoped dependencies → safe to register as Singleton.
+	builder.Services.AddSingleton<ITokenService, TokenService>();
 
-	var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-	var secretKey = jwtSettings["SecretKey"]
-		?? throw new InvalidOperationException("JwtSettings:SecretKey is not configured.");
+	// --- JWT Options pattern registration -------------------------------------------
+	// Binds appsettings.json "JwtSettings" section to the strongly-typed JwtSettings
+	// class. Both TokenService (via IOptions<JwtSettings>) and AddJwtBearer below
+	// consume values from this single binding — no string-key lookups anywhere.
+	builder.Services.Configure<JwtSettings>(
+		builder.Configuration.GetSection(JwtSettings.SectionName));
+
+	var jwtSettings = builder.Configuration
+		.GetSection(JwtSettings.SectionName)
+		.Get<JwtSettings>()
+		?? throw new InvalidOperationException(
+			$"Configuration section '{JwtSettings.SectionName}' is missing or empty.");
+
+	if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey))
+		throw new InvalidOperationException("JwtSettings:SecretKey is not configured.");
 
 	builder.Services
 		.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -81,14 +95,15 @@ try
 		{
 			options.TokenValidationParameters = new TokenValidationParameters
 			{
-				ValidateIssuer = true,
-				ValidateAudience = true,
-				ValidateLifetime = true,
+				ValidateIssuer           = true,
+				ValidateAudience         = true,
+				ValidateLifetime         = true,
 				ValidateIssuerSigningKey = true,
-				ValidIssuer = jwtSettings["Issuer"],
-				ValidAudience = jwtSettings["Audience"],
-				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-				ClockSkew = TimeSpan.Zero
+				ValidIssuer              = jwtSettings.Issuer,
+				ValidAudience            = jwtSettings.Audience,
+				IssuerSigningKey         = new SymmetricSecurityKey(
+					Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+				ClockSkew                = TimeSpan.Zero
 			};
 		});
 

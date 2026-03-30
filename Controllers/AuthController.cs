@@ -3,6 +3,7 @@ using ManageAccountWebAPI.Data.Entities;
 using ManageAccountWebAPI.Controllers.Filters;
 using ManageAccountWebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ManageAccountWebAPI.Controllers
 {
@@ -142,7 +143,7 @@ namespace ManageAccountWebAPI.Controllers
                 var result = _authService.UserHasPermission(userId, permissionCode);
                 return Ok(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -361,6 +362,130 @@ namespace ManageAccountWebAPI.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [Authorize]
+        [HttpGet("users/me")]
+        public ActionResult<UserDTO> GetCurrentUser()
+        {
+            try
+            {
+                var userId = GetUserId();
+                var userDto = _authService.GetCurrentUser(userId);
+                return Ok(userDto);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpGet("users/me/roles")]
+        public ActionResult<IEnumerable<RoleDTO>> GetMyRoles()
+        {
+            try
+            {
+                var userId = GetUserId();
+                var roles = _authService.GetRolesByUserId(userId);
+                return Ok(roles);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("roles/{id:int}/permissions")]
+        public ActionResult<IEnumerable<Permission>> GetPermissionsByRoleId(int id)
+        {
+            try
+            {
+                var permissions = _authService.GetPermissionsByRoleId(id);
+                return Ok(permissions);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("admin/users")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult<IEnumerable<UserDTO>> GetAllUsers()
+        {
+            try
+            {
+                var users = _authService.GetAllUsers();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("users/{userId:int}/roles")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult<IEnumerable<RoleDTO>> GetRolesByUserId(int userId)
+        {
+            try
+            {
+                var roles = _authService.GetRolesByUserId(userId);
+                return Ok(roles);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("users/{userId:int}/permissions")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult<IEnumerable<Permission>> GetPermissionsByUserId(int userId)
+        {
+            try
+            {
+                var permissions = _authService.GetPermissionsByUserId(userId);
+                return Ok(permissions);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        private int GetUserId()
+        {
+            var claim = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "userId");
+            if (claim == null)
+                throw new UnauthorizedAccessException("Token không chứa userId.");
+
+            return int.Parse(claim.Value);
         }
     }
 }

@@ -49,4 +49,10 @@ namespace ManageAccountWebAPI.Data.DTOs
         public int UserId { get; set; }
         public int PermissionId { get; set; }
     }
+
+    public class RoleDTO
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 }

@@ -37,7 +37,11 @@ namespace ManageAccountWebAPI.Infrastructure.Repositories
         UserPermission? GetUserPermission(int userId, int permissionId);
         void RemoveUserPermission(UserPermission userPermission);
 
-        bool HasPermission(int userId, string permissionCode);
+        bool UserHasPermission(int userId, string permissionCode);
         User? GetUserWithRolesByUsername(string username);
+        ICollection<Role> GetRolesByUserId(int userId);
+        ICollection<Permission> GetPermissionsByRoleId(int roleId);
+        ICollection<Permission> GetPermissionsByUserId(int userId);
+        ICollection<User> GetAllUsers();
     }
 }

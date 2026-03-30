@@ -235,7 +235,8 @@ namespace ManageAccountWebAPI.Services.Implementations
             var permission = _authRepository.GetPermissionById(request.PermissionId)
                 ?? throw new KeyNotFoundException($"Permission id={request.PermissionId} not found.");
 
-            if (_authRepository.GetUserPermission(request.UserId, request.PermissionId) != null)
+            string permissionCode = permission.Code;
+            if (UserHasPermission(request.UserId, permissionCode))
             {
                 throw new InvalidOperationException($"User id={request.UserId} already has permission id={request.PermissionId}.");
             }
@@ -266,10 +267,66 @@ namespace ManageAccountWebAPI.Services.Implementations
                 _logger.LogWarning("User {UserId} not found", userId);
                 return false;
             }
-            var hasPermission = _authRepository.HasPermission(userId, permissionCode);
+            var hasPermission = _authRepository.UserHasPermission(userId, permissionCode);
             _logger.LogInformation("User {UserId} {Result} permission '{Code}'",
                 userId, hasPermission ? "has" : "lacks", permissionCode);
             return hasPermission;
+        }
+
+        public UserDTO GetCurrentUser(int userId)
+        {
+            _logger.LogInformation("Fetching current user for UserId {UserId}", userId);
+            var user = _authRepository.GetUserById(userId);
+            if (user == null)
+            {
+                _logger.LogWarning("Current user {UserId} not found", userId);
+                throw new KeyNotFoundException($"User id={userId} not found.");
+            }
+
+            return new UserDTO
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Username = user.Username,
+                Email = user.Email,
+            };
+        }
+
+        public IEnumerable<RoleDTO> GetRolesByUserId(int userId)
+        {
+            _logger.LogInformation("Fetching roles for user {UserId}", userId);
+            var roles = _authRepository.GetRolesByUserId(userId);
+            return roles.Select(r => new RoleDTO
+            {
+                Id = r.Id,
+                Name = r.Name
+            }).ToList();
+        }
+
+        public IEnumerable<Permission> GetPermissionsByUserId(int userId)
+        {
+            _logger.LogInformation("Fetching direct permissions for user {UserId}", userId);
+            return _authRepository.GetPermissionsByUserId(userId);
+        }
+
+        public IEnumerable<Permission> GetPermissionsByRoleId(int roleId)
+        {
+            _logger.LogInformation("Fetching permissions for role {RoleId}", roleId);
+            var permissions = _authRepository.GetPermissionsByRoleId(roleId);
+            return permissions;
+        }
+
+        public IEnumerable<UserDTO> GetAllUsers()
+        {
+            _logger.LogInformation("Fetching all users");
+            var users = _authRepository.GetAllUsers();
+            return users.Select(u => new UserDTO
+            {
+                Id = u.Id,
+                FullName = u.FullName,
+                Username = u.Username,
+                Email = u.Email,
+            }).ToList();
         }
     }
 }

@@ -142,9 +142,9 @@ namespace ManageAccountWebAPI.Controllers
 
         private int GetUserId()
         {
-            var claim = User.Claims.FirstOrDefault(c => c.Type == "userId");
+            var claim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             if (claim == null)
-                throw new UnauthorizedAccessException("Token không chứa userId.");
+                throw new UnauthorizedAccessException("Token không chứa UserId.");
 
             return int.Parse(claim.Value);
         }
