@@ -55,7 +55,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("permissions")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Create")]
         public ActionResult<Permission> CreatePermission([FromBody] PermissionRequest request)
         {
             try
@@ -70,7 +70,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("permissions")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Read")]
         public ActionResult<IEnumerable<Permission>> GetAllPermissions()
         {
             try
@@ -85,7 +85,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("permissions/{id:int}")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Read")]
         public ActionResult<Permission> GetPermissionById(int id)
         {
             try
@@ -101,7 +101,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPut("permissions/{id:int}")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Update")]
         public ActionResult<Permission> UpdatePermission(int id, [FromBody] PermissionRequest request)
         {
             try
@@ -117,7 +117,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpDelete("permissions/{id:int}")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Delete")]
         public ActionResult DeletePermission(int id)
         {
             try
@@ -150,7 +150,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("roles")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Role.Create")]
         public ActionResult<Role> CreateRole([FromBody] RoleRequest request)
         {
             try
@@ -169,7 +169,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("roles")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Role.Read")]
         public ActionResult<IEnumerable<Role>> GetAllRoles()
         {
             try
@@ -184,7 +184,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("roles/{id:int}")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Role.Read")]
         public ActionResult<Role> GetRoleById(int id)
         {
             try
@@ -200,7 +200,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPut("roles/{id:int}")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Role.Update")]
         public ActionResult<Role> UpdateRole(int id, [FromBody] RoleRequest request)
         {
             try
@@ -220,7 +220,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpDelete("roles/{id:int}")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Role.Delete")]
         public ActionResult DeleteRole(int id)
         {
             try
@@ -239,7 +239,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("users/assign-role")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Role.Assign")]
         public ActionResult AssignRoleToUser([FromBody] AssignRoleToUserRequest request)
         {
             try
@@ -262,7 +262,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("users/remove-role")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Role.Assign")]
         public ActionResult RemoveRoleFromUser([FromBody] AssignRoleToUserRequest request)
         {
             try
@@ -281,7 +281,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("roles/assign-permission")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Assign")]
         public ActionResult AssignPermissionToRole([FromBody] AssignPermissionToRoleRequest request)
         {
             try
@@ -304,7 +304,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("roles/remove-permission")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Assign")]
         public ActionResult RemovePermissionFromRole([FromBody] AssignPermissionToRoleRequest request)
         {
             try
@@ -323,7 +323,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("users/assign-permission")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Assign")]
         public ActionResult AssignPermissionToUser([FromBody] AssignPermissionToUserRequest request)
         {
             try
@@ -346,7 +346,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("users/remove-permission")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Assign")]
         public ActionResult RemovePermissionFromUser([FromBody] AssignPermissionToUserRequest request)
         {
             try
@@ -427,7 +427,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("admin/users")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("User.ReadAll")]
         public ActionResult<IEnumerable<UserDTO>> GetAllUsers()
         {
             try
@@ -442,7 +442,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("users/{userId:int}/roles")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Role.Read")]
         public ActionResult<IEnumerable<RoleDTO>> GetRolesByUserId(int userId)
         {
             try
@@ -461,7 +461,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpGet("users/{userId:int}/permissions")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
+        [AuthorizeFunction("Permission.Read")]
         public ActionResult<IEnumerable<Permission>> GetPermissionsByUserId(int userId)
         {
             try
