@@ -14,6 +14,24 @@ namespace ManageAccountWebAPI.Services.Interfaces
         Permission? UpdatePermission(int id, PermissionRequest request);
         void DeletePermission(int id);
 
+        Role CreateRole(RoleRequest request);
+        IEnumerable<Role> GetAllRoles();
+        Role? GetRoleById(int id);
+        Role? UpdateRole(int id, RoleRequest request);
+        void DeleteRole(int id);
+
+        void AssignRoleToUser(AssignRoleToUserRequest request);
+        void RemoveRoleFromUser(AssignRoleToUserRequest request);
+        void AssignPermissionToRole(AssignPermissionToRoleRequest request);
+        void RemovePermissionFromRole(AssignPermissionToRoleRequest request);
+        void AssignPermissionToUser(AssignPermissionToUserRequest request);
+        void RemovePermissionFromUser(AssignPermissionToUserRequest request);
+
         bool UserHasPermission(int userId, string permissionCode);
+        UserDTO GetCurrentUser(int userId);
+        IEnumerable<RoleDTO> GetRolesByUserId(int userId);
+        IEnumerable<Permission> GetPermissionsByUserId(int userId);
+        IEnumerable<Permission> GetPermissionsByRoleId(int roleId);
+        IEnumerable<UserDTO> GetAllUsers();
     }
 }

@@ -42,6 +42,5 @@ Desktop.ini
 appsettings.Local.json
 appsettings.*.local.json
 secrets.json
-# Local tooling/generated artifacts that should not be versioned
-postman/
+
 Migrations/

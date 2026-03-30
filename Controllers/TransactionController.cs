@@ -17,7 +17,7 @@ namespace ManageAccountWebAPI.Controllers
             this.logger = logger;
         }
         [HttpPost("deposit/{id:int}/savings")]
-        [AuthorizeFunction("Account.Update")]
+        [AuthorizeFunction("Transaction.Deposit")]
         public ActionResult DepositToSavings(int id, [FromQuery] decimal amount)
         {
             logger.LogInformation("Received savings deposit request for account {AccountId} with amount {Amount}.", id, amount);
@@ -39,7 +39,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("deposit/{id:int}/checking")]
-        [AuthorizeFunction("Account.Update")]
+        [AuthorizeFunction("Transaction.Deposit")]
         public ActionResult DepositToChecking(int id, [FromQuery] decimal amount)
         {
             logger.LogInformation("Received checking deposit request for account {AccountId} with amount {Amount}.", id, amount);
@@ -61,7 +61,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("withdraw/{id:int}/savings")]
-        [AuthorizeFunction("Account.Update")]
+        [AuthorizeFunction("Transaction.Withdraw")]
         public ActionResult WithdrawFromSavings(int id, [FromQuery] decimal amount)
         {
             logger.LogInformation("Received savings withdrawal request for account {AccountId} with amount {Amount}.", id, amount);
@@ -83,7 +83,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("withdraw/{id:int}/checking")]
-        [AuthorizeFunction("Account.Update")]
+        [AuthorizeFunction("Transaction.Withdraw")]
         public ActionResult WithdrawFromChecking(int id, [FromQuery] decimal amount)
         {
             logger.LogInformation("Received checking withdrawal request for account {AccountId} with amount {Amount}.", id, amount);
@@ -114,7 +114,7 @@ namespace ManageAccountWebAPI.Controllers
         }
 
         [HttpPost("withdraw/{id:int}/checking/all")]
-        [AuthorizeFunction("Account.Update")]
+        [AuthorizeFunction("Transaction.Withdraw")]
         public ActionResult<decimal> WithdrawAllCheckingBalance(int id)
         {
             logger.LogInformation("Received request to withdraw all checking balance for account {AccountId}.", id);

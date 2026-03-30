@@ -4,11 +4,10 @@ namespace ManageAccountWebAPI.Services.Interfaces
 {
     public interface IAccountService
     {
-        IEnumerable<AccountDTO> GetAll();
-        AccountDTO? GetById(int id);
-        AccountDTO Create(CreateAccountRequestDTO request);
-        AccountDTO? Update(int id, UpdateAccountRequestDTO request);
-        bool Delete(int id);
+        IEnumerable<AccountDTO> GetAllByUserId(int userId);
+        AccountDTO? GetById(int userId, int accountId);
+        AccountDTO Create(int userId, CreateAccountRequestDTO request);
+        bool Delete(int userId, int accountId);
         IEnumerable<AccountDTO> GetAccountsRankedByBalance();
         IEnumerable<AccountDTO> GetAccountsBelowBalance(decimal threshold);
         IEnumerable<AccountDTO> GetTopNCheckingAccounts(int topN);

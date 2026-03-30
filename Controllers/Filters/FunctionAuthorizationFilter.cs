@@ -25,11 +25,19 @@ namespace ManageAccountWebAPI.Controllers.Filters
                 return;
             }
 
-            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("userId");
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)
+                ?? user.FindFirst("UserId")
+                ?? user.FindFirst("userId");
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
             {
                 context.Result = new UnauthorizedResult();
                 return;
+            }
+
+            var hasPermission = _authService.UserHasPermission(userId, _permissionCode);
+            if (!hasPermission)
+            {
+                context.Result = new ForbidResult();
             }
         }
     }
