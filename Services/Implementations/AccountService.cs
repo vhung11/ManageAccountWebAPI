@@ -59,37 +59,7 @@ namespace ManageAccountWebAPI.Services.Implementations
             var checkingInterestType = EnsureInterestType(5.1m);
 
             var account = new Account
-            {
-                UserId = userId,
-                AccountBalances = new List<AccountBalance>
-                {
-                    new()
-                    {
-                        Type = AccountType.Savings,
-                        Balance = request.SavingsBalance,
-                        InterestType = savingsInterestType
-                    },
-                    new()
-                    {
-                        Type = AccountType.Checking,
-                        Balance = request.CheckingBalance,
-                        InterestType = checkingInterestType
-                    }
-                }
-            };
 
-            accountRepository.Add(account);
-            accountRepository.SaveChanges();
-
-            logger.LogDebug("Created account {AccountId} with {BalanceCount} balances for user {UserId}.",
-            account.Id,
-            account.AccountBalances.Count,
-            userId);
-
-            var user = authRepository.GetUserById(userId);
-            var fullName = user?.FullName ?? string.Empty;
-            return AccountMapper.ToDTO(account, account.AccountBalances, fullName);
-        }
 
         private InterestType EnsureInterestType(decimal rate)
         {
@@ -101,11 +71,13 @@ namespace ManageAccountWebAPI.Services.Implementations
             }
 
             logger.LogInformation("Creating interest type with rate {InterestRate}.", rate);
-
-            return interestTypeRepository.Add(new InterestType
+            
+            var newInterestType = interestTypeRepository.Add(new InterestType
             {
                 Rate = rate
             });
+            interestTypeRepository.SaveChanges();
+            return newInterestType;
         }
 
         public bool Delete(int userId, int accountId)
