@@ -14,15 +14,39 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
             _context = context;
         }
 
-        public User? GetUserByUsername(string username) => _context.Users.FirstOrDefault(u => u.Username == username);
+        // ── User ──────────────────────────────────────────────
 
-        public User? GetUserById(int id) => _context.Users.FirstOrDefault(u => u.Id == id);
+        public User? GetUserByUsername(string username)
+            => _context.Users.FirstOrDefault(u => u.Username == username);
 
-        public User? GetUserByEmail(string email) => _context.Users.FirstOrDefault(u => u.Email == email);
+        public User? GetUserById(int id)
+            => _context.Users.FirstOrDefault(u => u.Id == id);
+
+        public User? GetUserByEmail(string email)
+            => _context.Users.FirstOrDefault(u => u.Email == email);
+
+        public User? GetUserWithRole(int id)
+            => _context.Users
+                .Include(u => u.Role)
+                    .ThenInclude(r => r.RolePermissions)
+                        .ThenInclude(rp => rp.Permission)
+                .FirstOrDefault(u => u.Id == id);
+
+        public User? GetUserWithRoleByUsername(string username)
+            => _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefault(u => u.Username == username);
 
         public User AddUser(User user)
         {
             _context.Users.Add(user);
+            _context.SaveChanges();
+            return user;
+        }
+
+        public User UpdateUser(User user)
+        {
+            _context.Users.Update(user);
             _context.SaveChanges();
             return user;
         }
@@ -33,11 +57,16 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
             _context.SaveChanges();
         }
 
-        public Permission? GetPermissionById(int id) => _context.Permissions.FirstOrDefault(p => p.Id == id);
+        // ── Permission ───────────────────────────────────────
 
-        public Permission? GetPermissionByCode(string code) => _context.Permissions.FirstOrDefault(p => p.Code == code);
+        public Permission? GetPermissionById(int id)
+            => _context.Permissions.FirstOrDefault(p => p.Id == id);
 
-        public ICollection<Permission> GetAllPermissions() => _context.Permissions.ToList();
+        public Permission? GetPermissionByCode(string code)
+            => _context.Permissions.FirstOrDefault(p => p.Code == code);
+
+        public ICollection<Permission> GetAllPermissions()
+            => _context.Permissions.ToList();
 
         public Permission AddPermission(Permission permission)
         {
@@ -59,27 +88,62 @@ namespace ManageAccountWebAPI.Infrastructure.Implementations
             _context.SaveChanges();
         }
 
-        public UserPermission? GetUserPermission(int userId, int permissionId) => _context.UserPermissions.FirstOrDefault(up => up.UserId == userId && up.PermissionId == permissionId);
+        // ── Role ──────────────────────────────────────────────
 
-        public UserPermission AddUserPermission(UserPermission userPermission)
+        public Role? GetRoleById(int id)
+            => _context.Roles.FirstOrDefault(r => r.Id == id);
+
+        public Role? GetRoleByName(string name)
+            => _context.Roles.FirstOrDefault(r => r.Name == name);
+
+        public ICollection<Role> GetAllRoles()
+            => _context.Roles.ToList();
+
+        public Role AddRole(Role role)
         {
-            _context.UserPermissions.Add(userPermission);
+            _context.Roles.Add(role);
             _context.SaveChanges();
-            return userPermission;
+            return role;
         }
 
-        public void RemoveUserPermission(UserPermission userPermission)
+        public Role UpdateRole(Role role)
         {
-            _context.UserPermissions.Remove(userPermission);
+            _context.Roles.Update(role);
+            _context.SaveChanges();
+            return role;
+        }
+
+        public void DeleteRole(Role role)
+        {
+            _context.Roles.Remove(role);
             _context.SaveChanges();
         }
 
-        public ICollection<Permission> GetPermissionsForUser(int userId)
+        // ── RolePermission ────────────────────────────────────
+
+        public RolePermission? GetRolePermission(int roleId, int permissionId)
+            => _context.RolePermissions
+                .FirstOrDefault(rp => rp.RoleId == roleId && rp.PermissionId == permissionId);
+
+        public RolePermission AddRolePermission(RolePermission rolePermission)
         {
-            return _context.UserPermissions
-                .Include(up => up.Permission)
-                .Where(up => up.UserId == userId)
-                .Select(up => up.Permission)
+            _context.RolePermissions.Add(rolePermission);
+            _context.SaveChanges();
+            return rolePermission;
+        }
+
+        public void RemoveRolePermission(RolePermission rolePermission)
+        {
+            _context.RolePermissions.Remove(rolePermission);
+            _context.SaveChanges();
+        }
+
+        public ICollection<Permission> GetPermissionsForRole(int roleId)
+        {
+            return _context.RolePermissions
+                .Include(rp => rp.Permission)
+                .Where(rp => rp.RoleId == roleId)
+                .Select(rp => rp.Permission)
                 .ToList();
         }
     }

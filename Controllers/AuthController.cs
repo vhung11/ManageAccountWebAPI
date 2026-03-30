@@ -17,6 +17,8 @@ namespace ManageAccountWebAPI.Controllers
             _authService = authService;
         }
 
+        // ── Auth ──────────────────────────────────────────────
+
         [HttpPost("login")]
         public ActionResult Login([FromBody] LoginRequest request)
         {
@@ -43,15 +45,17 @@ namespace ManageAccountWebAPI.Controllers
                 _authService.Register(request);
                 return Ok("Đăng ký thành công.");
             }
-            catch (UnauthorizedAccessException ex)
+            catch (InvalidOperationException ex)
             {
-                return Unauthorized(ex.Message);
+                return Conflict(ex.Message);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
+        // ── Permission CRUD ──────────────────────────────────
 
         [HttpPost("permissions")]
         [AuthorizeFunction("Auth.ManagePermissions")]
@@ -90,6 +94,7 @@ namespace ManageAccountWebAPI.Controllers
             try
             {
                 var permission = _authService.GetPermissionById(id);
+                if (permission == null) return NotFound();
                 return Ok(permission);
             }
             catch (Exception ex)
@@ -100,11 +105,12 @@ namespace ManageAccountWebAPI.Controllers
 
         [HttpPut("permissions/{id:int}")]
         [AuthorizeFunction("Auth.ManagePermissions")]
-        public ActionResult<Permission> UpdatePermission([FromBody] PermissionRequest request)
+        public ActionResult<Permission> UpdatePermission(int id, [FromBody] PermissionRequest request)
         {
             try
             {
-                var permission = _authService.UpdatePermission(request);
+                var permission = _authService.UpdatePermission(id, request);
+                if (permission == null) return NotFound();
                 return Ok(permission);
             }
             catch (Exception ex)
@@ -122,20 +128,9 @@ namespace ManageAccountWebAPI.Controllers
                 _authService.DeletePermission(id);
                 return NoContent();
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException ex)
             {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        [HttpPost("users/{userId:int}/permissions/{permissionId:int}")]
-        [AuthorizeFunction("Auth.ManagePermissions")]
-        public IActionResult AssignPermissionToUser(int userId, int permissionId)
-        {
-            try
-            {
-                _authService.AssignPermissionToUser(userId, permissionId);
-                return Ok("Gán quyền cho người dùng thành công.");
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -143,14 +138,20 @@ namespace ManageAccountWebAPI.Controllers
             }
         }
 
-        [HttpDelete("users/{userId:int}/permissions/{permissionId:int}")]
+        // ── Role CRUD ─────────────────────────────────────────
+
+        [HttpPost("roles")]
         [AuthorizeFunction("Auth.ManagePermissions")]
-        public IActionResult RemovePermissionFromUser(int userId, int permissionId)
+        public ActionResult<Role> CreateRole([FromBody] RoleRequest request)
         {
             try
             {
-                _authService.RemovePermissionFromUser(userId, permissionId);
-                return Ok("Xóa quyền khỏi người dùng thành công.");
+                var role = _authService.CreateRole(request);
+                return Ok(role);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
             }
             catch (Exception ex)
             {
@@ -158,20 +159,157 @@ namespace ManageAccountWebAPI.Controllers
             }
         }
 
-        [HttpGet("users/{userId:int}/permissions")]
+        [HttpGet("roles")]
         [AuthorizeFunction("Auth.ManagePermissions")]
-        public IActionResult GetPermissionsForUser(int userId)
+        public ActionResult<IEnumerable<Role>> GetAllRoles()
         {
             try
             {
-                var permissions = _authService.GetPermissionsForUser(userId);
+                var roles = _authService.GetAllRoles();
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("roles/{id:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult<Role> GetRoleById(int id)
+        {
+            try
+            {
+                var role = _authService.GetRoleById(id);
+                if (role == null) return NotFound();
+                return Ok(role);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("roles/{id:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult<Role> UpdateRole(int id, [FromBody] RoleRequest request)
+        {
+            try
+            {
+                var role = _authService.UpdateRole(id, request);
+                if (role == null) return NotFound();
+                return Ok(role);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("roles/{id:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public ActionResult DeleteRole(int id)
+        {
+            try
+            {
+                _authService.DeleteRole(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // ── Role-Permission Assignment ────────────────────────
+
+        [HttpPost("roles/{roleId:int}/permissions/{permissionId:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public IActionResult AssignPermissionToRole(int roleId, int permissionId)
+        {
+            try
+            {
+                _authService.AssignPermissionToRole(roleId, permissionId);
+                return Ok("Gán quyền cho vai trò thành công.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("roles/{roleId:int}/permissions/{permissionId:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public IActionResult RemovePermissionFromRole(int roleId, int permissionId)
+        {
+            try
+            {
+                _authService.RemovePermissionFromRole(roleId, permissionId);
+                return Ok("Xóa quyền khỏi vai trò thành công.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("roles/{roleId:int}/permissions")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public IActionResult GetPermissionsForRole(int roleId)
+        {
+            try
+            {
+                var permissions = _authService.GetPermissionsForRole(roleId);
                 return Ok(permissions);
             }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
+        // ── User-Role Assignment ──────────────────────────────
+
+        [HttpPut("users/{userId:int}/role/{roleId:int}")]
+        [AuthorizeFunction("Auth.ManagePermissions")]
+        public IActionResult AssignRoleToUser(int userId, int roleId)
+        {
+            try
+            {
+                _authService.AssignRoleToUser(userId, roleId);
+                return Ok("Gán vai trò cho người dùng thành công.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // ── Permission Checking ──────────────────────────────
 
         [HttpGet("user-has-permission")]
         public IActionResult UserHasPermission(int userId, string permissionCode)
@@ -180,10 +318,6 @@ namespace ManageAccountWebAPI.Controllers
             {
                 var result = _authService.UserHasPermission(userId, permissionCode);
                 return Ok(result);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
@@ -198,10 +332,6 @@ namespace ManageAccountWebAPI.Controllers
             {
                 var result = _authService.UserHasPermission(userId, resource, action);
                 return Ok(result);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
